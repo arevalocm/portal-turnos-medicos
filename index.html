@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Turnos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f0ee;color:#1a1917;font-size:14px}
+.topbar{background:#1a1917;color:#fff;padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:50px}
+.topbar-title{font-size:14px;font-weight:bold}
+.main{padding:1.25rem;max-width:1100px;margin:0 auto}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}
+.stat-card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:1rem}
+.stat-num{font-size:26px;font-weight:bold}
+.stat-label{font-size:12px;color:#666;margin-top:2px}
+.card{background:#fff;border:1px solid #ddd;border-radius:8px;margin-bottom:1rem;overflow:hidden}
+.card-header{padding:.875rem 1.25rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:bold}
+.tbl-wrap{overflow-x:auto;max-height:480px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;font-weight:bold;color:#666;padding:7px 10px;border-bottom:1px solid #ddd;background:#fff;position:sticky;top:0;text-transform:uppercase}
+td{padding:8px 10px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+tr:hover td{background:#f9f9f7}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold}
+.b-urg{background:#fcecea;color:#7a1f16}
+.b-prog{background:#e8f0fb;color:#0f3a72}
+.b-int{background:#fdf3e3;color:#6b3d00}
+.b-sin{background:#f0f0ee;color:#555}
+.b-ok{background:#e6f5ed;color:#0f4f2e}
+.b-m0{background:#e3f5f2;color:#084f46}
+.b-m1{background:#fdf3e3;color:#6b3d00}
+.b-m2{background:#e8f0fb;color:#0f3a72}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:5px;border:1px solid #ccc;background:#fff;font-size:12px;cursor:pointer;font-family:Arial,sans-serif}
+.btn:hover{background:#f0f0ee}
+.btn-primary{background:#1a56a0;color:#fff;border-color:#1a56a0}
+.btn-primary:hover{background:#0f3a72}
+.btn-sm{padding:3px 9px;font-size:11px}
+.btn-informar{background:#1a56a0;color:#fff;border:none;padding:6px 14px;border-radius:5px;font-size:12px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif}
+.btn-informar:hover{background:#0f3a72}
+.btn-listo{background:#e6f5ed;color:#0f4f2e;border:1px solid #a8d5be;padding:5px 10px;font-size:11px;font-weight:bold;border-radius:5px;cursor:pointer;font-family:Arial,sans-serif}
+select,input{padding:6px 10px;border-radius:5px;border:1px solid #ccc;font-size:13px;font-family:Arial,sans-serif}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f0f0ee}
+.login-card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:2.5rem;width:350px}
+.login-title{font-size:20px;font-weight:bold;margin-bottom:4px}
+.login-sub{font-size:13px;color:#666;margin-bottom:1.5rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:11px;font-weight:bold;color:#666;text-transform:uppercase;margin-bottom:5px}
+.field select,.field input{width:100%}
+.pin-row{display:flex;gap:10px}
+.pin-box{width:58px;height:52px;border-radius:5px;border:1px solid #ccc;font-size:22px;font-weight:bold;text-align:center;font-family:Arial,sans-serif}
+.pin-box:focus{outline:none;border-color:#1a56a0;box-shadow:0 0 0 3px rgba(26,86,160,.15)}
+.err{font-size:12px;color:#c0392b;text-align:center;min-height:18px;margin-top:6px}
+.btn-login{width:100%;padding:11px;border-radius:5px;border:none;background:#1a1917;color:#fff;font-size:14px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif;margin-top:.5rem}
+.btn-login:hover{background:#333}
+.nav-tabs{display:flex;gap:4px;margin-bottom:1.25rem}
+.nav-tab{padding:6px 16px;border-radius:5px;font-size:13px;cursor:pointer;color:#666;background:transparent;border:none;font-family:Arial,sans-serif}
+.nav-tab.active{background:#fff;border:1px solid #ddd;color:#1a1917;font-weight:bold}
+.nav-tab:hover{background:#e8e8e5}
+.empty{text-align:center;padding:3rem;color:#999;font-size:13px}
+.progress{height:5px;background:#f0f0ee;border-radius:3px;margin-top:8px;overflow:hidden}
+.progress-bar{height:100%;background:#1a7a4a;border-radius:3px}
+.sel-inline{padding:3px 8px;font-size:12px;border-radius:4px;border:1px solid #ccc;font-family:Arial,sans-serif}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;padding:1.25rem}
+.form-actions{padding:0 1.25rem 1.25rem;display:flex;gap:8px;align-items:center}
+.msg-ok{font-size:12px;color:#1a7a4a;padding:6px 12px;background:#e6f5ed;border-radius:4px}
+.msg-err{font-size:12px;color:#c0392b;padding:6px 12px;background:#fcecea;border-radius:4px}
+.banner{background:#e8f0fb;border:1px solid #b5d0f0;border-radius:5px;padding:.7rem 1rem;font-size:12px;color:#0f3a72;margin-bottom:1rem}
+.banner-sync{background:#e6f5ed;border:1px solid #a8d5be;border-radius:5px;padding:.5rem 1rem;font-size:12px;color:#0f4f2e;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.btn-logout{padding:5px 12px;border-radius:5px;border:1px solid #444;background:transparent;color:#ccc;font-size:12px;cursor:pointer;font-family:Arial,sans-serif}
+.btn-logout:hover{background:#333;color:#fff}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex-shrink:0}
+.av-admin{background:#e8f0fb;color:#0f3a72}
+.av0{background:#e3f5f2;color:#084f46}
+.av1{background:#fdf3e3;color:#6b3d00}
+.av2{background:#e8f0fb;color:#0f3a72}
+.loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f0f0ee;flex-direction:column;gap:12px;color:#666;font-size:14px}
+.spinner{width:32px;height:32px;border:3px solid #ddd;border-top-color:#1a56a0;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dot-live{display:inline-block;width:8px;height:8px;background:#1a7a4a;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+<div id="root"><div class="loading-screen"><div class="spinner"></div><span>Conectando...</span></div></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+// ── Configuración Firebase ──────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDeJEoRcln_CKs8k8Cs1tvq5kfTTzJ44sU",
+  authDomain: "portal-turnos.firebaseapp.com",
+  projectId: "portal-turnos",
+  storageBucket: "portal-turnos.firebasestorage.app",
+  messagingSenderId: "992048440873",
+  appId: "1:992048440873:web:a89af9f09da59a03c75e38",
+  measurementId: "G-P0RV6XC49N"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── Constantes ──────────────────────────────────────────────────────────────
+var BASE='https://ris.tomografodelestado.com.ar/informe/informe_crearmedico/';
+var PINS={admin:'9045',medina:'4159',ortega:'2067',arevalo_med:'9208'};
+var MEDICOS=[
+  {id:'medina',nombre:'Dr. Gabriel Medina',ini:'GM',av:'av0',bc:'b-m0'},
+  {id:'ortega',nombre:'Dra. Cinthya Ortega',ini:'CO',av:'av1',bc:'b-m1'},
+  {id:'arevalo',nombre:'Dr. Carlos Arévalo',ini:'CA',av:'av2',bc:'b-m2'}
+];
+var UROLES={admin:{rol:'admin'},medina:{rol:'medico',idx:0},ortega:{rol:'medico',idx:1},arevalo_med:{rol:'medico',idx:2}};
+var ROT=['arevalo','ortega','medina'];
+
+var PACS_DEFAULT=[{"orden":"207579","fecha":"26/03/26","nombre":"ALZOGARAY FRANCISCO GERONIMO","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"207866","fecha":"29/03/26","nombre":"JUAREZ TERESA FERNANDA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"207868","fecha":"29/03/26","nombre":"ARGAÑARAZ LOPEZ BAUTISTA MILAN","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"207867","fecha":"29/03/26","nombre":"D´GIUSTI MARIA ESTHER","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"207880","fecha":"29/03/26","nombre":"MORENO JOSE","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"207883","fecha":"29/03/26","nombre":"VILTES DANIEL ROBERTO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"207893","fecha":"29/03/26","nombre":"BURGOS CARLOS RAFAEL","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"207897","fecha":"29/03/26","nombre":"ANCIETA FARFAN YAMIL ALEXIS","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"207921","fecha":"30/03/26","nombre":"MENESES JUANA ALICIA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"207340","fecha":"30/03/26","nombre":"MUÑOZ GUZMAN NERY ESQUIEL","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"206679","fecha":"30/03/26","nombre":"IBAÑEZ DAVID","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"207992","fecha":"30/03/26","nombre":"GUTIERREZ LORENZO","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"207938","fecha":"30/03/26","nombre":"MONTE CLETO BAUTISTA","servicio":"Tomografo Tartagal","atencion":"Internado"},{"orden":"207623","fecha":"30/03/26","nombre":"SALVATIERRA PAULA","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"206576","fecha":"30/03/26","nombre":"OLMEDO AITANA NAOMI","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"207955","fecha":"30/03/26","nombre":"CASTRO CARLOS VALERIO","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"207926","fecha":"30/03/26","nombre":"DEMARCHI MAIA SOLANGE","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"208043","fecha":"30/03/26","nombre":"REINAGA BARRIOS PILAR AGUSTINA","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"208054","fecha":"30/03/26","nombre":"VILLALVA VIVIANO","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"208052","fecha":"30/03/26","nombre":"CUELLAR VELASQUES RICHARD EDUARDO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208056","fecha":"31/03/26","nombre":"GONZALEZ PRADO PEDRO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208045","fecha":"31/03/26","nombre":"CARO ORIHUELA AXEL JULIAN","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208061","fecha":"31/03/26","nombre":"ESPINILLO JORGE ELOY","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208062","fecha":"31/03/26","nombre":"CORREA MARTHA ELVA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"206897","fecha":"31/03/26","nombre":"MAMANI REGINALDO RAMON","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"207953","fecha":"31/03/26","nombre":"MOYA MARIA MADALENA","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"208111","fecha":"31/03/26","nombre":"RIOS JORGE DANIEL","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208118","fecha":"31/03/26","nombre":"LATORRE GUSTAVO ADRIAN","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208184","fecha":"31/03/26","nombre":"RIVERO SANDRO SILVERIO","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"208213","fecha":"01/04/26","nombre":"CUETO RAMON GUSTAVO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208238","fecha":"01/04/26","nombre":"SANCHEZ EDILVURGO FAUSTINO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208287","fecha":"01/04/26","nombre":"AYARDE PAULA MARIA","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"208140","fecha":"01/04/26","nombre":"CARRIZO OSCAR MARCELO","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"208327","fecha":"01/04/26","nombre":"LEAL CRISTIAN LUIS","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"208270","fecha":"01/04/26","nombre":"CASIMIRO ALARCON LAUTARO ELISEO","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"208348","fecha":"01/04/26","nombre":"MALDONADO DORA NELDA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208409","fecha":"03/04/26","nombre":"CAJAL JOSE EUGENIO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208410","fecha":"03/04/26","nombre":"LOPEZ JAVIER MATIAS","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208412","fecha":"03/04/26","nombre":"CHOSCO ANTONIO ALEJANDRO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208418","fecha":"03/04/26","nombre":"VILTE EUGENIO","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"208422","fecha":"03/04/26","nombre":"FARFAN CESAR RUBEN","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"208428","fecha":"03/04/26","nombre":"CHAUQUI CLARA","servicio":"Tomografo Cafayate","atencion":"Urgencia"},{"orden":"208425","fecha":"03/04/26","nombre":"RODRIGUEZ TOMAS","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"208427","fecha":"03/04/26","nombre":"NERIS WALTER HECTOR","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208429","fecha":"03/04/26","nombre":"VILLAGRA CARINA ZULEMA DEL MILAGRO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208432","fecha":"03/04/26","nombre":"CATAN VICTOR JAVIER","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208442","fecha":"03/04/26","nombre":"CHOSCO ANTONIO ALEJANDRO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208434","fecha":"03/04/26","nombre":"REYNOSO PEREYRA MARIO RAFAEL DANIEL","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"208446","fecha":"03/04/26","nombre":"VILLALBA NORMA ELIZABETH","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208444","fecha":"03/04/26","nombre":"ORTEGA JULIO CESAR","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208457","fecha":"03/04/26","nombre":"GONZALEZ LEANDRO FACUNDO","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"208450","fecha":"03/04/26","nombre":"CANCHI LAUTARO EZEQUIEL","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208461","fecha":"03/04/26","nombre":"ABRAHAM BEATRIZ MELISA","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"208702","fecha":"06/04/26","nombre":"MANSILLA TOBIAS AGUSTIN","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"207754","fecha":"06/04/26","nombre":"BECCARI SILVANA EDITH","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"208249","fecha":"07/04/26","nombre":"MARTINEZ ANA ROSA","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"208910","fecha":"07/04/26","nombre":"CORIMAYO FABIANA MILAGRO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208844","fecha":"07/04/26","nombre":"PASTRANA SOFIA CRISTAL GABRIELA","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Internado"},{"orden":"208781","fecha":"07/04/26","nombre":"GOPAR NESTOR OMAR","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"208882","fecha":"07/04/26","nombre":"REYNOSO RUBEN JESUS","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"208903","fecha":"07/04/26","nombre":"VERA CRISTIAN ARIEL","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"209009","fecha":"08/04/26","nombre":"CATACATA ROXANA ABIGAIL","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209092","fecha":"08/04/26","nombre":"ROMERO ESPINOZA LIAN CALEB","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"209068","fecha":"08/04/26","nombre":"TEJERINA CIRILO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209055","fecha":"08/04/26","nombre":"CAJAL JOSE EUGENIO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"208981","fecha":"09/04/26","nombre":"HURTAO VICTOR DAVID","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"208828","fecha":"09/04/26","nombre":"VEGA BURGOA ANDRES","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"209047","fecha":"09/04/26","nombre":"VERON LUCAS","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"209236","fecha":"09/04/26","nombre":"PASTRANA MARTA LEONIDAS","servicio":"Tomografo Cafayate","atencion":"Programado"},{"orden":"208637","fecha":"09/04/26","nombre":"MEDINACELIS PATRICIA AYELEN","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"209188","fecha":"09/04/26","nombre":"TEVEZ JULIO CONSTANTINO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209190","fecha":"09/04/26","nombre":"CRUZ MIA CATALINA","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"209291","fecha":"10/04/26","nombre":"SABAN ANTONIA","servicio":"Tomografo Tartagal","atencion":"Programado"},{"orden":"208274","fecha":"10/04/26","nombre":"TORRES MARIA ROSA","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"209344","fecha":"10/04/26","nombre":"GIMENEZ JOSEFA ESTER","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"209297","fecha":"10/04/26","nombre":"AGUIRRE FIDEL ROLANDO","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"209271","fecha":"10/04/26","nombre":"DIAZ ANGELA ARMINDA","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"209405","fecha":"10/04/26","nombre":"SUAREZ IRMA GLADYS","servicio":"Tomografo Tartagal","atencion":"Programado"},{"orden":"209433","fecha":"11/04/26","nombre":"CABRERA CARINA MERCEDES","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"209369","fecha":"13/04/26","nombre":"GARECA LILIA ISABEL","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"209578","fecha":"13/04/26","nombre":"VALDIVIEZO ORLANDO","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"209600","fecha":"13/04/26","nombre":"LOPEZ ANGEL GERARDO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209624","fecha":"13/04/26","nombre":"GARECA JOSE LUIS","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"208685","fecha":"13/04/26","nombre":"SAGREDO SANTIAGO GUSTAVO","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"209689","fecha":"13/04/26","nombre":"DE OLIVEIRA ALEXANDRE SILVESTRE","servicio":"Tomografo Cafayate","atencion":"Urgencia"},{"orden":"208894","fecha":"13/04/26","nombre":"NARANJO ROSA VIRGINIA","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"209343","fecha":"13/04/26","nombre":"LOPEZ JOSE MAURICIO","servicio":"Tomog. Papa Francisco","atencion":"Programado"},{"orden":"208792","fecha":"13/04/26","nombre":"PANTOJA NATALIA EMILIA","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"209523","fecha":"13/04/26","nombre":"AYEJES ANALIA MARIANA","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"209756","fecha":"13/04/26","nombre":"ROSSELL MONICA","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"209755","fecha":"14/04/26","nombre":"MARISCAL JOSE LUIS","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209733","fecha":"14/04/26","nombre":"ROJAS OSVALDO ANTONIO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209758","fecha":"14/04/26","nombre":"CESPEDES JUAN CRISOSTOMO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209762","fecha":"14/04/26","nombre":"AYON ARMANDO ALFREDO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209765","fecha":"14/04/26","nombre":"MARTINEZ EXEQUIEL OMAR","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209760","fecha":"14/04/26","nombre":"PEREYRA SERGIO ARIEL","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209766","fecha":"14/04/26","nombre":"MAMANI CONDORI ISAAC JHONAT","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"209767","fecha":"14/04/26","nombre":"CARDOZO TEOBALDA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209725","fecha":"14/04/26","nombre":"ZARATE SANDRA VALERIA","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"208967","fecha":"14/04/26","nombre":"GARZON ADRIAN ENRIQUE","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"209813","fecha":"14/04/26","nombre":"ROMANO JOSSELYN CATERINA","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Internado"},{"orden":"209867","fecha":"14/04/26","nombre":"SANCHEZ BENJAMIN CARLOS","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209915","fecha":"14/04/26","nombre":"PALMA VILMA FLORENCIA AYELEN","servicio":"Tomog. Papa Francisco","atencion":"Urgencia"},{"orden":"209778","fecha":"14/04/26","nombre":"QUIPILDOR MARCELINO FEDERICO","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"209847","fecha":"14/04/26","nombre":"CONDORI SILVIA LORENA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209892","fecha":"14/04/26","nombre":"RUIZ GLORIA JUDIT","servicio":"Tomografo Orán","atencion":"Urgencia"},{"orden":"209942","fecha":"14/04/26","nombre":"SARAVIA ISRAEL SANTO","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Urgencia"},{"orden":"209909","fecha":"14/04/26","nombre":"RIVEROS BLANCA ROXANA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"209971","fecha":"15/04/26","nombre":"BURGOS ANDRES MERQUIEDES","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"209869","fecha":"15/04/26","nombre":"BARBOZA WAYAR NOELIA","servicio":"Tomog. Hosp. Materno Inf.","atencion":"Programado"},{"orden":"209866","fecha":"15/04/26","nombre":"ZELAYA NOEMI ADRIANA","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"208921","fecha":"15/04/26","nombre":"AYALA GABRIELA JOHANA VIRGINIA","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"208333","fecha":"15/04/26","nombre":"GARCIA MARIA VICTORIA","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"208253","fecha":"15/04/26","nombre":"CASTILLO JUANA NATIVIDAD","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"209937","fecha":"15/04/26","nombre":"ROJAS DANTE FEDERICO","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"209850","fecha":"15/04/26","nombre":"LOPEZ WALTER MAXIMILIANO","servicio":"Tomografo Boedo","atencion":"Programado"},{"orden":"210023","fecha":"15/04/26","nombre":"PEREZ JOSE ARGENTINO","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"210036","fecha":"15/04/26","nombre":"GARONA SALINAS GONZALO MARIA","servicio":"Tomografo Boedo","atencion":"Urgencia"},{"orden":"210120","fecha":"15/04/26","nombre":"BURGOS ANDRES MERQUIEDES","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"209868","fecha":"15/04/26","nombre":"SANCHEZ MONICA HAYDEE","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"210119","fecha":"15/04/26","nombre":"PASTOR TATIANA AGUSTINA","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"210099","fecha":"15/04/26","nombre":"RUBIO MARTA","servicio":"Tomografo Tartagal","atencion":"Urgencia"},{"orden":"210040","fecha":"15/04/26","nombre":"AZAR ALEJANDRA SOLEDAD","servicio":"Tomografo Orán","atencion":"Programado"},{"orden":"210014","fecha":"16/04/26","nombre":"D´ANNUNZIO JORGE TOMAS","servicio":"Tomografo Boedo","atencion":"Internado"},{"orden":"210106","fecha":"16/04/26","nombre":"ROJAS SANDRA EDITH","servicio":"Resonador Orán","atencion":"Programado"}];
+
+// ── Estado global ───────────────────────────────────────────────────────────
+var currentUser = null;
+var pacientes = [];
+var asignaciones = {};
+var overrides = {};
+var estadoMap = {}; // orden -> 'informado'
+var unsubscribe = null;
+
+// ── Firebase helpers ────────────────────────────────────────────────────────
+const DOC_ASIG = doc(db, 'portal', 'asignaciones');
+const DOC_OVER = doc(db, 'portal', 'overrides');
+const DOC_ESTADO = doc(db, 'portal', 'estados');
+const DOC_PACS = doc(db, 'portal', 'pacientes_extra');
+
+function autoAsignar(pacs){
+  var a={};
+  pacs.forEach(function(p){
+    var s=(p.servicio||'').toUpperCase();
+    var rm=s.indexOf('IRM')>=0||s.indexOf('RESONAN')>=0||s.indexOf('RESONADOR')>=0;
+    a[p.orden]=rm?'medina':ROT[(parseInt(p.fecha.split('/')[0],10)-1)%3];
+  });
+  return a;
+}
+
+async function loadFromFirebase(){
+  // Cargar asignaciones
+  try {
+    const snapA = await getDoc(DOC_ASIG);
+    asignaciones = snapA.exists() ? snapA.data() : {};
+  } catch(e){ asignaciones={}; }
+
+  // Cargar overrides
+  try {
+    const snapO = await getDoc(DOC_OVER);
+    overrides = snapO.exists() ? snapO.data() : {};
+  } catch(e){ overrides={}; }
+
+  // Cargar estados
+  try {
+    const snapE = await getDoc(DOC_ESTADO);
+    estadoMap = snapE.exists() ? snapE.data() : {};
+  } catch(e){ estadoMap={}; }
+
+  // Cargar pacientes extra
+  try {
+    const snapP = await getDoc(DOC_PACS);
+    var extra = snapP.exists() ? (snapP.data().lista || []) : [];
+    pacientes = PACS_DEFAULT.slice();
+    // Agregar extras que no estén ya en el default
+    var ordenes = new Set(pacientes.map(p=>p.orden));
+    extra.forEach(function(p){ if(!ordenes.has(p.orden)) pacientes.push(p); });
+  } catch(e){ pacientes = PACS_DEFAULT.slice(); }
+
+  // Aplicar estados a pacientes
+  pacientes.forEach(function(p){
+    p.estado = estadoMap[p.orden] || '';
+  });
+
+  // Auto-asignar los que no tienen asignación
+  var auto = autoAsignar(pacientes);
+  pacientes.forEach(function(p){
+    if(!asignaciones[p.orden]) asignaciones[p.orden] = auto[p.orden];
+  });
+  // Aplicar overrides
+  Object.keys(overrides).forEach(function(k){ asignaciones[k]=overrides[k]; });
+}
+
+async function saveAsignaciones(){
+  try { await setDoc(DOC_ASIG, asignaciones); } catch(e){ console.error('Error guardando asignaciones',e); }
+}
+async function saveOverrides(){
+  try { await setDoc(DOC_OVER, overrides); } catch(e){ console.error('Error guardando overrides',e); }
+}
+async function saveEstado(orden, estado){
+  estadoMap[orden] = estado;
+  try { await setDoc(DOC_ESTADO, estadoMap); } catch(e){ console.error('Error guardando estado',e); }
+}
+async function savePacientesExtra(){
+  var extra = pacientes.filter(p => !PACS_DEFAULT.find(d=>d.orden===p.orden));
+  try { await setDoc(DOC_PACS, {lista: extra}); } catch(e){ console.error('Error guardando pacientes',e); }
+}
+
+// Listener en tiempo real — cuando Firebase cambia, re-renderiza
+function startLiveSync(){
+  if(unsubscribe) unsubscribe();
+  // Escuchar cambios en el documento de estados
+  unsubscribe = onSnapshot(DOC_ESTADO, function(snap){
+    if(!snap.exists()) return;
+    var newEstados = snap.data();
+    var changed = false;
+    pacientes.forEach(function(p){
+      var newE = newEstados[p.orden]||'';
+      if(p.estado !== newE){ p.estado=newE; changed=true; }
+    });
+    estadoMap = newEstados;
+    if(changed && currentUser){
+      if(UROLES[currentUser].rol==='admin') renderAdmin(currentAdminTab);
+      else renderMedico();
+    }
+  });
+}
+
+// ── UI helpers ──────────────────────────────────────────────────────────────
+function ab(a){
+  var m={Urgencia:'b-urg',Programado:'b-prog',Internado:'b-int'};
+  return a?'<span class="badge '+(m[a]||'b-sin')+'">'+a+'</span>':'';
+}
+function ml(id){
+  var m=MEDICOS.filter(function(x){return x.id===id;})[0];
+  return m?'<span class="badge '+m.bc+'">'+m.nombre.split(' ').pop()+'</span>':'<span class="badge b-sin">Sin asignar</span>';
+}
+function topbar(nombre,ini,av){
+  return '<div class="topbar"><span class="topbar-title">Portal de Turnos — Tomógrafo del Estado</span><div style="display:flex;align-items:center;gap:10px"><div class="avatar '+av+'">'+ini+'</div><span style="font-size:13px;color:#ccc">'+nombre+'</span><button class="btn-logout" onclick="logout()">Salir</button></div></div>';
+}
+function syncBanner(){
+  return '<div class="banner-sync"><span class="dot-live"></span>Sincronizado en tiempo real con todos los usuarios</div>';
+}
+
+// ── Login ───────────────────────────────────────────────────────────────────
+function renderLogin(err){
+  document.getElementById('root').innerHTML='<div class="login-wrap"><div class="login-card"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem">Tomógrafo del Estado S.E.</div><div class="login-title">Portal de Turnos</div><div class="login-sub">Ingresá tu usuario y PIN para ver tus estudios</div><div class="field"><label>Usuario</label><select id="usr"><option value="">Seleccioná tu nombre...</option><option value="medina">Dr. Gabriel Medina</option><option value="ortega">Dra. Cinthya Ortega</option><option value="arevalo_med">Dr. Carlos Arévalo</option><option value="admin">Administrador</option></select></div><div class="field"><label>PIN de acceso</label><div class="pin-row"><input class="pin-box" id="p0" type="password" maxlength="1" inputmode="numeric" oninput="pi(0)" onkeydown="pk(event,0)"><input class="pin-box" id="p1" type="password" maxlength="1" inputmode="numeric" oninput="pi(1)" onkeydown="pk(event,1)"><input class="pin-box" id="p2" type="password" maxlength="1" inputmode="numeric" oninput="pi(2)" onkeydown="pk(event,2)"><input class="pin-box" id="p3" type="password" maxlength="1" inputmode="numeric" oninput="pi(3)" onkeydown="pk(event,3)"></div></div><div class="err" id="er">'+(err||'')+'</div><button class="btn-login" onclick="doLogin()">Ingresar</button></div></div>';
+}
+function pi(i){var v=document.getElementById('p'+i).value;if(v&&i<3)document.getElementById('p'+(i+1)).focus();if(i===3)setTimeout(doLogin,80);}
+function pk(e,i){if(e.key==='Backspace'&&!document.getElementById('p'+i).value&&i>0)document.getElementById('p'+(i-1)).focus();}
+function gp(){return[0,1,2,3].map(function(i){return document.getElementById('p'+i).value;}).join('');}
+
+async function doLogin(){
+  var u=document.getElementById('usr').value;
+  if(!u){document.getElementById('er').textContent='Seleccioná un usuario';return;}
+  var pin=gp();
+  if(pin.length<4){document.getElementById('er').textContent='Ingresá los 4 dígitos de tu PIN';return;}
+  if(PINS[u]!==pin){document.getElementById('er').textContent='PIN incorrecto. Intentá de nuevo.';[0,1,2,3].forEach(function(i){document.getElementById('p'+i).value='';});document.getElementById('p0').focus();return;}
+  // Mostrar cargando
+  document.getElementById('er').textContent='';
+  document.querySelector('.btn-login').textContent='Cargando...';
+  document.querySelector('.btn-login').disabled=true;
+  await loadFromFirebase();
+  currentUser=u;
+  startLiveSync();
+  if(UROLES[u].rol==='admin') renderAdmin('estudios');
+  else renderMedico();
+}
+
+// ── Admin ───────────────────────────────────────────────────────────────────
+var currentAdminTab = 'estudios';
+
+function renderAdmin(tab){
+  currentAdminTab = tab;
+  var total=pacientes.length;
+  var counts=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id;}).length;});
+  var content='';
+  if(tab==='estudios'){
+    content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
+    pacientes.forEach(function(p){
+      content+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td>'+ab(p.atencion)+'</td><td>'+ml(asignaciones[p.orden])+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td><select class="sel-inline" onchange="reasignar(\''+p.orden+'\',this.value)">'+MEDICOS.map(function(m){return'<option value="'+m.id+'"'+(asignaciones[p.orden]===m.id?' selected':'')+'>'+m.nombre.split(' ').pop()+'</option>';}).join('')+'</select></td><td><button class="btn btn-sm" onclick="abrirInformar(\''+p.orden+'\')">Abrir</button></td></tr>';
+    });
+    content+='</tbody></table></div></div>';
+  } else {
+    content='<div class="card"><div class="card-header"><span class="card-title">Agregar paciente</span></div><div class="form-grid"><div class="field"><label>Nº Orden *</label><input id="fo" type="number" placeholder="ej: 208500"></div><div class="field"><label>Fecha</label><input id="ff" type="date"></div><div class="field"><label>Apellido, Nombre</label><input id="fn" placeholder="ej: GARCIA, JUAN"></div><div class="field"><label>Servicio</label><input id="fs" placeholder="ej: Tomógrafo Boedo"></div><div class="field"><label>Atención</label><select id="fa"><option value="">Sin especificar</option><option>Urgencia</option><option>Programado</option><option>Internado</option></select></div><div class="field"><label>Asignar a</label><select id="fm"><option value="">Automático</option>'+MEDICOS.map(function(m){return'<option value="'+m.id+'">'+m.nombre+'</option>';}).join('')+'</select></div></div><div class="form-actions"><button class="btn btn-primary" onclick="guardar()">Guardar</button><button class="btn" onclick="renderAdmin(\'estudios\')">Cancelar</button><span id="msg" style="margin-left:8px"></span></div></div>';
+  }
+  document.getElementById('root').innerHTML=topbar('Administrador','AD','av-admin')+
+  '<div class="main">'+syncBanner()+'<div class="nav-tabs"><button class="nav-tab'+(tab==='estudios'?' active':'')+'" onclick="renderAdmin(\'estudios\')">Estudios</button><button class="nav-tab'+(tab==='agregar'?' active':'')+'" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div>'+
+  '<div class="grid3">'+MEDICOS.map(function(m,i){return'<div class="stat-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div class="avatar '+m.av+'">'+m.ini+'</div><span style="font-size:12px;color:#666">'+m.nombre+'</span></div><div class="stat-num">'+counts[i]+'</div><div class="stat-label">asignados</div><div class="progress"><div class="progress-bar" style="width:'+(total?Math.round(counts[i]/total*100):0)+'%"></div></div></div>';}).join('')+'</div>'+content+'</div>';
+}
+
+async function reasignar(orden,medId){
+  if(!medId)return;
+  asignaciones[orden]=medId;
+  overrides[orden]=medId;
+  renderAdmin('estudios');
+  await saveAsignaciones();
+  await saveOverrides();
+}
+
+async function reaplicar(){
+  var auto=autoAsignar(pacientes);
+  Object.keys(auto).forEach(function(k){asignaciones[k]=auto[k];});
+  Object.keys(overrides).forEach(function(k){asignaciones[k]=overrides[k];});
+  renderAdmin('estudios');
+  await saveAsignaciones();
+}
+
+async function guardar(){
+  var orden=document.getElementById('fo').value.trim();
+  var msg=document.getElementById('msg');
+  if(!orden){msg.innerHTML='<span class="msg-err">El Nº de Orden es obligatorio</span>';return;}
+  if(pacientes.filter(function(p){return p.orden===orden;}).length>0){msg.innerHTML='<span class="msg-err">Ya existe ese Nº de Orden</span>';return;}
+  var fv=document.getElementById('ff').value,fd=fv;
+  if(fv){var parts=fv.split('-');fd=parts[2]+'/'+parts[1]+'/'+parts[0].slice(2);}
+  var med=document.getElementById('fm').value;
+  var nuevo={orden:orden,fecha:fd,nombre:document.getElementById('fn').value||'—',servicio:document.getElementById('fs').value||'',atencion:document.getElementById('fa').value||''};
+  pacientes.push(nuevo);
+  var autoA=autoAsignar([nuevo]);
+  asignaciones[orden]=med||autoA[orden];
+  msg.innerHTML='<span class="msg-ok">Guardando...</span>';
+  await savePacientesExtra();
+  await saveAsignaciones();
+  msg.innerHTML='<span class="msg-ok">✓ Guardado y sincronizado</span>';
+  setTimeout(function(){renderAdmin('estudios');},900);
+}
+
+// ── Médico ───────────────────────────────────────────────────────────────────
+function renderMedico(){
+  var u=UROLES[currentUser];
+  var med=MEDICOS[u.idx];
+  var mis=pacientes.filter(function(p){return asignaciones[p.orden]===med.id;});
+  var pend=mis.filter(function(p){return p.estado!=='informado';}).length;
+  var rows='';
+  mis.forEach(function(p){
+    rows+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td>'+ab(p.atencion)+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td style="display:flex;gap:6px;align-items:center">'+(p.estado!=='informado'?'<button class="btn-informar" onclick="abrirInformar(\''+p.orden+'\')">+ Informar</button>':'<span style="font-size:12px;color:#1a7a4a">Completado</span>')+'</td></tr>';
+  });
+  document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
+  '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
+  '<div class="grid3"><div class="stat-card"><div class="stat-num">'+mis.length+'</div><div class="stat-label">estudios asignados</div></div><div class="stat-card"><div class="stat-num" style="color:#c0392b">'+pend+'</div><div class="stat-label">pendientes</div></div><div class="stat-card"><div class="stat-num" style="color:#1a7a4a">'+(mis.length-pend)+'</div><div class="stat-label">informados</div></div></div>'+
+  '<div class="card"><div class="card-header"><span class="card-title">Mis estudios asignados</span></div>'+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div></div>';
+}
+
+async function marcar(orden){
+  var p=pacientes.filter(function(x){return x.orden===orden;})[0];
+  if(p) p.estado='informado';
+  renderMedico();
+  await saveEstado(orden,'informado');
+}
+
+function logout(){
+  currentUser=null;
+  if(unsubscribe){unsubscribe();unsubscribe=null;}
+  renderLogin();
+}
+
+function abrirInformar(orden){
+  var url=BASE+orden+'/';
+  var w=window.open(url,'_blank','width=1200,height=850,scrollbars=yes');
+  if(!w){window.open(url,'_blank');return;}
+  // Detectar cuando el médico cierra la ventana del RIS
+  var check=setInterval(async function(){
+    if(w.closed){
+      clearInterval(check);
+      // Mostrar diálogo de confirmación
+      var p=pacientes.filter(function(x){return x.orden===orden;})[0];
+      var nombre=p?p.nombre:'este estudio';
+      // Crear modal de confirmación
+      var overlay=document.createElement('div');
+      overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML='<div style="background:#fff;border-radius:10px;padding:2rem;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">'+
+        '<div style="font-size:15px;font-weight:bold;margin-bottom:8px">¿Terminaste el informe?</div>'+
+        '<div style="font-size:13px;color:#666;margin-bottom:1.5rem"><b>'+nombre+'</b><br>Si cerraste sin informar, hacé clic en <b>No</b>.</div>'+
+        '<div style="display:flex;gap:10px">'+
+        '<button id="btn-si" style="flex:1;padding:10px;background:#1a7a4a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer">✓ Sí, ya lo informé</button>'+
+        '<button id="btn-no" style="flex:1;padding:10px;background:#f0f0ee;color:#333;border:1px solid #ccc;border-radius:6px;font-size:14px;cursor:pointer">No, volver a la lista</button>'+
+        '</div></div>';
+      document.body.appendChild(overlay);
+      document.getElementById('btn-si').onclick=async function(){
+        document.body.removeChild(overlay);
+        pacientes=pacientes.filter(function(x){return x.orden!==orden;});
+        await saveEstado(orden,'informado');
+        if(currentUser&&UROLES[currentUser].rol==='admin') renderAdmin(currentAdminTab);
+        else if(currentUser) renderMedico();
+      };
+      document.getElementById('btn-no').onclick=function(){
+        document.body.removeChild(overlay);
+      };
+    }
+  },1000);
+}
+
+// ── Exponer funciones globales ───────────────────────────────────────────────
+window.doLogin=doLogin;
+window.pi=pi;
+window.pk=pk;
+window.logout=logout;
+window.renderAdmin=renderAdmin;
+window.reasignar=reasignar;
+window.reaplicar=reaplicar;
+window.guardar=guardar;
+window.marcar=marcar;
+window.abrirInformar=abrirInformar;
+
+// ── Iniciar ──────────────────────────────────────────────────────────────────
+renderLogin();
+</script>
+</body>
+</html>
