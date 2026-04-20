@@ -165,16 +165,16 @@ function esMismoMes(fecha, mm, yy){
 function autoAsignar(pacs){
   var a={};
 
-  // Mes y año actuales (formato 2 dígitos)
+  // Mes y año actuales
   var hoy=new Date();
   var mmHoy=String(hoy.getMonth()+1).padStart(2,'0');
   var yyHoy=String(hoy.getFullYear()).slice(2);
   var diaHoy=hoy.getDate();
   var totalDias=diasEnMes(yyHoy, mmHoy);
 
-  // Ritmo esperado al día de hoy (códigos que deberían llevar acumulados)
-  var ritmoOrtega=CUOTAS.ortega/totalDias*diaHoy;
-  var ritmoMedina=CUOTAS.medina/totalDias*diaHoy;
+  // Ritmo esperado proporcional al día de hoy (fracción de cuota que deberían llevar)
+  // Ej: día 10 de 30 → deberían llevar 1/3 de su cuota
+  var fraccion=diaHoy/totalDias;
 
   // Contar acumulado del mes actual usando asignaciones ya existentes
   var acum={ortega:0, medina:0, arevalo:0};
@@ -194,27 +194,24 @@ function autoAsignar(pacs){
       return;
     }
 
-    // Tomografías: asignar al que esté más por debajo de su ritmo esperado
     var nCods=p.codigos?p.codigos.length:1;
 
-    // Déficit = ritmo esperado - acumulado actual (cuánto le falta respecto al ritmo)
-    var defOrtega=ritmoOrtega - acum.ortega;
-    var defMedina=ritmoMedina - acum.medina;
+    // Proporción usada = acumulado / cuota total
+    // El que tenga menor proporción usada está más atrasado → recibe el próximo estudio
+    // Esto compara en términos relativos: Ortega con 100/300 = 33% y Medina con 40/150 = 27%
+    // → le toca a Medina porque está más atrasado proporcionalmente
+    var propOrtega = acum.ortega < CUOTAS.ortega ? acum.ortega / CUOTAS.ortega : Infinity;
+    var propMedina = acum.medina < CUOTAS.medina ? acum.medina / CUOTAS.medina : Infinity;
+    // Arévalo recibe solo cuando ambos llegaron a su cuota
+    var propArevalo = (propOrtega === Infinity && propMedina === Infinity) ? 0 : Infinity;
 
     var elegido;
-    if(defOrtega >= defMedina && acum.ortega < CUOTAS.ortega){
-      // Ortega está más atrasada respecto a su ritmo y no llegó a su cuota
-      elegido='ortega';
-    } else if(defMedina > 0 && acum.medina < CUOTAS.medina){
-      // Medina está atrasado respecto a su ritmo y no llegó a su cuota
-      elegido='medina';
-    } else if(acum.ortega < CUOTAS.ortega){
-      elegido='ortega';
-    } else if(acum.medina < CUOTAS.medina){
-      elegido='medina';
-    } else {
-      // Ambos llegaron a su cuota, el resto va a Arévalo
+    if(propArevalo === 0){
       elegido='arevalo';
+    } else if(propOrtega <= propMedina){
+      elegido='ortega';
+    } else {
+      elegido='medina';
     }
 
     a[p.orden]=elegido;
