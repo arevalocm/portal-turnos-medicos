@@ -144,7 +144,7 @@ const DOC_ESTADO = doc(db, 'portal', 'estados');
 const DOC_PACS = doc(db, 'portal', 'pacientes_extra');
 
 // Cuotas mensuales de códigos por médico
-var CUOTAS={ortega:300, medina:150};
+var CUOTAS={ortega:220, medina:150};
 
 function diasEnMes(yy, mm){
   // yy: 2 dígitos (ej "26"), mm: 2 dígitos (ej "04")
@@ -196,17 +196,14 @@ function autoAsignar(pacs){
 
     var nCods=p.codigos?p.codigos.length:1;
 
-    // Proporción usada = acumulado / cuota total
-    // El que tenga menor proporción usada está más atrasado → recibe el próximo estudio
-    // Esto compara en términos relativos: Ortega con 100/300 = 33% y Medina con 40/150 = 27%
-    // → le toca a Medina porque está más atrasado proporcionalmente
+    // Distribuir en proporción a las cuotas (2:1 entre Ortega y Medina)
+    // sin intentar recuperar atraso — solo comparar quién lleva menor proporción
+    // relativa de su cuota entre los estudios YA asignados en esta sesión
     var propOrtega = acum.ortega < CUOTAS.ortega ? acum.ortega / CUOTAS.ortega : Infinity;
     var propMedina = acum.medina < CUOTAS.medina ? acum.medina / CUOTAS.medina : Infinity;
-    // Arévalo recibe solo cuando ambos llegaron a su cuota
-    var propArevalo = (propOrtega === Infinity && propMedina === Infinity) ? 0 : Infinity;
 
     var elegido;
-    if(propArevalo === 0){
+    if(propOrtega === Infinity && propMedina === Infinity){
       elegido='arevalo';
     } else if(propOrtega <= propMedina){
       elegido='ortega';
@@ -215,7 +212,7 @@ function autoAsignar(pacs){
     }
 
     a[p.orden]=elegido;
-    if(esMismoMes(p.fecha, mmHoy, yyHoy)) acum[elegido]+=nCods;
+    acum[elegido]+=nCods;
   });
   return a;
 }
