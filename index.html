@@ -165,38 +165,9 @@ function esMismoMes(fecha, mm, yy){
 function autoAsignar(pacs){
   var a={};
 
-  // Mes y año actuales
-  var hoy=new Date();
-  var mmHoy=String(hoy.getMonth()+1).padStart(2,'0');
-  var yyHoy=String(hoy.getFullYear()).slice(2);
-  var diaHoy=hoy.getDate();
-  var totalDias=diasEnMes(yyHoy, mmHoy);
-
-  // Ritmo esperado proporcional al día de hoy (fracción de cuota que deberían llevar)
-  // Ej: día 10 de 30 → deberían llevar 1/3 de su cuota
-  var fraccion=diaHoy/totalDias;
-
-  // Acumulado simulado: asumir que cada médico ya lleva su ritmo proporcional
-  // al día de hoy (días transcurridos / días del mes × cuota)
-  // Esto evita sobrecargar a alguien al arrancar el portal a mitad de mes
-  var diasTranscurridos = diaHoy - 1; // días completos transcurridos
-  var acumSimulado = {
-    ortega: Math.round(CUOTAS.ortega / totalDias * diasTranscurridos),
-    medina: Math.round(CUOTAS.medina / totalDias * diasTranscurridos)
-  };
-
-  // Sumar lo real asignado hoy por encima del simulado
-  var acum={
-    ortega: acumSimulado.ortega,
-    medina: acumSimulado.medina,
-    arevalo: 0
-  };
-  pacientes.forEach(function(p){
-    var med=asignaciones&&asignaciones[p.orden];
-    if(med && acum[med]!==undefined && esMismoMes(p.fecha, mmHoy, yyHoy)){
-      acum[med]+=(p.codigos?p.codigos.length:0);
-    }
-  });
+  // Acumulador limpio — solo cuenta lo que se asigna en esta pasada
+  // No usa asignaciones previas de Firebase para evitar sesgos
+  var acum={ortega:0, medina:0, arevalo:0};
 
   pacs.forEach(function(p){
     var s=(p.servicio||'').toUpperCase();
