@@ -529,6 +529,11 @@ window.abrirInformar=abrirInformar;
 
 // ── Iniciar ──────────────────────────────────────────────────────────────────
 renderLogin();
+// Exponer funciones al scope global para debugging
+window._reaplicar = reaplicar;
+window._autoAsignar = autoAsignar;
+window._getPacientes = function(){ return pacientes; };
+window._getAsignaciones = function(){ return asignaciones; };
 </script>
 </body>
 </html>
