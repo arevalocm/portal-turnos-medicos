@@ -165,6 +165,11 @@ function esMismoMes(fecha, mm, yy){
 function autoAsignar(pacs){
   var a={};
 
+  // Mes y año actuales
+  var hoy=new Date();
+  var mmHoy=String(hoy.getMonth()+1).padStart(2,'0');
+  var yyHoy=String(hoy.getFullYear()).slice(2);
+
   // Acumulador limpio — solo cuenta lo que se asigna en esta pasada
   // No usa asignaciones previas de Firebase para evitar sesgos
   var acum={ortega:0, medina:0, arevalo:0};
