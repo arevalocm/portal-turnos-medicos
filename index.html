@@ -402,7 +402,25 @@ async function reasignar(orden,medId){
 }
 
 async function reaplicar(){
-  var auto=autoAsignar(pacientes);
+  // Lógica de distribución proporcional 44/30/26 embebida directamente
+  var auto={};
+  var acum={ortega:0,medina:0,arevalo:0};
+  pacientes.forEach(function(p){
+    var s=(p.servicio||'').toUpperCase();
+    var rm=s.indexOf('RESONAN')>=0||s.indexOf('RESONADOR')>=0||s.indexOf('IRM')>=0;
+    if(rm){auto[p.orden]='medina';acum.medina+=(p.codigos?p.codigos.length:1);return;}
+    var nCods=p.codigos?p.codigos.length:1;
+    var total=acum.ortega+acum.medina+acum.arevalo+0.001;
+    var defO=0.44-acum.ortega/total;
+    var defM=0.30-acum.medina/total;
+    var defA=0.26-acum.arevalo/total;
+    var elegido;
+    if(defO>=defM&&defO>=defA)elegido='ortega';
+    else if(defM>=defO&&defM>=defA)elegido='medina';
+    else elegido='arevalo';
+    auto[p.orden]=elegido;
+    acum[elegido]+=nCods;
+  });
   Object.keys(auto).forEach(function(k){asignaciones[k]=auto[k];});
   Object.keys(overrides).forEach(function(k){asignaciones[k]=overrides[k];});
   renderAdmin('estudios');
