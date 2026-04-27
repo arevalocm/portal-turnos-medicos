@@ -188,26 +188,27 @@ function autoAsignar(pacs){
 
     var nCods=p.codigos?p.codigos.length:1;
 
-    // Distribuir en proporción a las cuotas entre los 3 médicos
-    // Arévalo recibe lo que sobre PERO siempre participa en la rotación
-    // usando una cuota implícita = resto estimado del volumen mensual
-    // Proporción: ortega 220 : medina 150 : arevalo 130 (ajustable)
-    var CUOTA_AREVALO = 130;
-    var propOrtega = acum.ortega / CUOTAS.ortega;
-    var propMedina = acum.medina / CUOTAS.medina;
-    var propArevalo = acum.arevalo / CUOTA_AREVALO;
+    // Distribuir siempre en proporción fija entre los 3 médicos
+    // Proporción: ortega 44% : medina 30% : arevalo 26%
+    // (basado en cuotas 220:150:130)
+    // El que tenga menor proporción relativa recibe el próximo estudio
+    var total = acum.ortega + acum.medina + acum.arevalo + 0.001;
+    var propOrtega = acum.ortega / total;
+    var propMedina = acum.medina / total;
+    var propArevalo = acum.arevalo / total;
+
+    var TARGET_ORTEGA = 0.44;
+    var TARGET_MEDINA = 0.30;
+    var TARGET_AREVALO = 0.26;
+
+    var defOrtega = TARGET_ORTEGA - propOrtega;
+    var defMedina = TARGET_MEDINA - propMedina;
+    var defArevalo = TARGET_AREVALO - propArevalo;
 
     var elegido;
-    // El que tenga menor proporción recibe el próximo estudio
-    if(propOrtega <= propMedina && propOrtega <= propArevalo && acum.ortega < CUOTAS.ortega){
+    if(defOrtega >= defMedina && defOrtega >= defArevalo){
       elegido='ortega';
-    } else if(propMedina <= propOrtega && propMedina <= propArevalo && acum.medina < CUOTAS.medina){
-      elegido='medina';
-    } else if(propArevalo <= propOrtega && propArevalo <= propMedina){
-      elegido='arevalo';
-    } else if(acum.ortega < CUOTAS.ortega){
-      elegido='ortega';
-    } else if(acum.medina < CUOTAS.medina){
+    } else if(defMedina >= defOrtega && defMedina >= defArevalo){
       elegido='medina';
     } else {
       elegido='arevalo';
