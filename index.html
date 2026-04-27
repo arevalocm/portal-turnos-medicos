@@ -185,19 +185,29 @@ function autoAsignar(pacs){
 
     var nCods=p.codigos?p.codigos.length:1;
 
-    // Distribuir en proporción a las cuotas (2:1 entre Ortega y Medina)
-    // sin intentar recuperar atraso — solo comparar quién lleva menor proporción
-    // relativa de su cuota entre los estudios YA asignados en esta sesión
-    var propOrtega = acum.ortega < CUOTAS.ortega ? acum.ortega / CUOTAS.ortega : Infinity;
-    var propMedina = acum.medina < CUOTAS.medina ? acum.medina / CUOTAS.medina : Infinity;
+    // Distribuir en proporción a las cuotas entre los 3 médicos
+    // Arévalo recibe lo que sobre PERO siempre participa en la rotación
+    // usando una cuota implícita = resto estimado del volumen mensual
+    // Proporción: ortega 220 : medina 150 : arevalo 130 (ajustable)
+    var CUOTA_AREVALO = 130;
+    var propOrtega = acum.ortega / CUOTAS.ortega;
+    var propMedina = acum.medina / CUOTAS.medina;
+    var propArevalo = acum.arevalo / CUOTA_AREVALO;
 
     var elegido;
-    if(propOrtega === Infinity && propMedina === Infinity){
-      elegido='arevalo';
-    } else if(propOrtega <= propMedina){
+    // El que tenga menor proporción recibe el próximo estudio
+    if(propOrtega <= propMedina && propOrtega <= propArevalo && acum.ortega < CUOTAS.ortega){
       elegido='ortega';
-    } else {
+    } else if(propMedina <= propOrtega && propMedina <= propArevalo && acum.medina < CUOTAS.medina){
       elegido='medina';
+    } else if(propArevalo <= propOrtega && propArevalo <= propMedina){
+      elegido='arevalo';
+    } else if(acum.ortega < CUOTAS.ortega){
+      elegido='ortega';
+    } else if(acum.medina < CUOTAS.medina){
+      elegido='medina';
+    } else {
+      elegido='arevalo';
     }
 
     a[p.orden]=elegido;
