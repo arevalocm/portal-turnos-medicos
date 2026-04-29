@@ -512,7 +512,7 @@ function renderMedico(){
   });
   document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
-  '<div class="grid3"><div class="stat-card"><div class="stat-num">'+mis.length+'</div><div class="stat-label">estudios asignados</div></div><div class="stat-card"><div class="stat-num" style="color:#c0392b">'+pend+'</div><div class="stat-label">pendientes</div></div><div class="stat-card"><div class="stat-num" style="color:#1a7a4a">'+(mis.length-pend)+'liquidacionMedico(med.id)+</div><div class="stat-label">informados</div></div></div>'+
+  '<div class="grid3"><div class="stat-card"><div class="stat-num">'+mis.length+'</div><div class="stat-label">pacientes &nbsp;·&nbsp; <b>'+mis.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0)+'</b> regiones</div></div><div class="stat-card"><div class="stat-num" style="color:#c0392b">'+pend+'</div><div class="stat-label">pendientes</div></div><div class="stat-card"><div class="stat-num" style="color:#1a7a4a">'+(mis.length-pend)+'</div><div class="stat-label">informados</div></div></div>'+
   '<div class="card"><div class="card-header"><span class="card-title">Mis estudios asignados</span></div>'+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div></div>';
 }
 
