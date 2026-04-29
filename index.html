@@ -274,8 +274,27 @@ async function saveEstado(orden, estado){
   try { await setDoc(DOC_ESTADO, estadoMap); } catch(e){ console.error('Error guardando estado',e); }
 }
 async function savePacientesExtra(){
-  var extra = pacientes.filter(p => !PACS_DEFAULT.find(d=>d.orden===p.orden));
-  try { await setDoc(DOC_PACS, {lista: extra}); } catch(e){ console.error('Error guardando pacientes',e); }
+  // Guardar TODOS los informados (no solo los que no están en PACS_DEFAULT)
+  // Así cuando se actualiza la lista y un informado desaparece del RIS,
+  // sigue disponible en Firebase para la liquidación
+  var informados = pacientes.filter(function(p){
+    return estadoMap[p.orden] === 'informado' && !PACS_DEFAULT.find(function(d){return d.orden===p.orden;});
+  });
+  try { await setDoc(DOC_PACS, {lista: informados}); } catch(e){ console.error('Error guardando pacientes',e); }
+}
+
+async function saveInformadoEnFirebase(p){
+  // Cuando un paciente se informa, guardarlo en pacientes_extra si no está ya
+  if(!p) return;
+  try {
+    const snap = await getDoc(DOC_PACS);
+    var lista = snap.exists() ? (snap.data().lista || []) : [];
+    var yaEsta = lista.find(function(x){return x.orden===p.orden;});
+    if(!yaEsta){
+      lista.push({orden:p.orden, fecha:p.fecha, nombre:p.nombre, servicio:p.servicio, atencion:p.atencion, codigos:p.codigos||[]});
+      await setDoc(DOC_PACS, {lista: lista});
+    }
+  } catch(e){ console.error('Error guardando informado',e); }
 }
 
 // Listener en tiempo real — cuando Firebase cambia, re-renderiza
@@ -346,6 +365,7 @@ function renderAdmin(tab){
   currentAdminTab = tab;
   var total=pacientes.length;
   var counts=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id;}).length;});
+  var regiones=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id;}).reduce(function(acc,p){return acc+(p.codigos?p.codigos.length:0);},0);});
   var content='';
   if(tab==='estudios'){
     content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
@@ -389,7 +409,7 @@ function renderAdmin(tab){
   }
   document.getElementById('root').innerHTML=topbar('Administrador','AD','av-admin')+
   '<div class="main">'+syncBanner()+'<div class="nav-tabs"><button class="nav-tab'+(tab==='estudios'?' active':'')+'" onclick="renderAdmin(\'estudios\')">Estudios</button><button class="nav-tab'+(tab==='agregar'?' active':'')+'" onclick="renderAdmin(\'agregar\')">+ Agregar</button><button class="nav-tab'+(tab==='liquidacion'?' active':'')+'" onclick="renderAdmin(\'liquidacion\')">Liquidación</button></div>'+
-  '<div class="grid3">'+MEDICOS.map(function(m,i){return'<div class="stat-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div class="avatar '+m.av+'">'+m.ini+'</div><span style="font-size:12px;color:#666">'+m.nombre+'</span></div><div class="stat-num">'+counts[i]+'</div><div class="stat-label">asignados</div><div class="progress"><div class="progress-bar" style="width:'+(total?Math.round(counts[i]/total*100):0)+'%"></div></div></div>';}).join('')+'</div>'+content+'</div>';
+  '<div class="grid3">'+MEDICOS.map(function(m,i){return'<div class="stat-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div class="avatar '+m.av+'">'+m.ini+'</div><span style="font-size:12px;color:#666">'+m.nombre+'</span></div><div class="stat-num">'+counts[i]+'</div><div class="stat-label">pacientes &nbsp;·&nbsp; <b>'+regiones[i]+'</b> regiones</div><div class="progress"><div class="progress-bar" style="width:'+(total?Math.round(counts[i]/total*100):0)+'%"></div></div></div>';}).join('')+'</div>'+content+'</div>';
 }
 
 async function reasignar(orden,medId){
@@ -501,6 +521,7 @@ async function marcar(orden){
   if(p) p.estado='informado';
   renderMedico();
   await saveEstado(orden,'informado');
+  await saveInformadoEnFirebase(p); // guardar en Firebase para liquidación persistente
 }
 
 function logout(){
@@ -535,6 +556,8 @@ function abrirInformar(orden){
         document.body.removeChild(overlay);
         pacientes=pacientes.filter(function(x){return x.orden!==orden;});
         await saveEstado(orden,'informado');
+      var pp=pacientes.filter(function(x){return x.orden===orden;})[0];
+      await saveInformadoEnFirebase(pp);
         if(currentUser&&UROLES[currentUser].rol==='admin') renderAdmin(currentAdminTab);
         else if(currentUser) renderMedico();
       };
