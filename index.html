@@ -242,11 +242,15 @@ async function loadFromFirebase(){
   // Cargar pacientes extra
   try {
     const snapP = await getDoc(DOC_PACS);
-    var extra = snapP.exists() ? (snapP.data().lista || []) : [];
+    var extra = [];
+    try {
+      if(snapP.exists() && snapP.data().lista && Array.isArray(snapP.data().lista)){
+        extra = snapP.data().lista;
+      }
+    } catch(e){ extra = []; }
     pacientes = PACS_DEFAULT.slice();
-    // Agregar extras que no estén ya en el default
     var ordenes = new Set(pacientes.map(p=>p.orden));
-    extra.forEach(function(p){ if(!ordenes.has(p.orden)) pacientes.push(p); });
+    extra.forEach(function(p){ if(p && p.orden && !ordenes.has(p.orden)) pacientes.push(p); });
   } catch(e){ pacientes = PACS_DEFAULT.slice(); }
 
   // Aplicar estados a pacientes
@@ -284,14 +288,16 @@ async function savePacientesExtra(){
 }
 
 async function saveInformadoEnFirebase(p){
-  // Cuando un paciente se informa, guardarlo en pacientes_extra si no está ya
   if(!p) return;
   try {
     const snap = await getDoc(DOC_PACS);
-    var lista = snap.exists() ? (snap.data().lista || []) : [];
+    var lista = [];
+    if(snap.exists() && snap.data().lista && Array.isArray(snap.data().lista)){
+      lista = snap.data().lista;
+    }
     var yaEsta = lista.find(function(x){return x.orden===p.orden;});
     if(!yaEsta){
-      lista.push({orden:p.orden, fecha:p.fecha, nombre:p.nombre, servicio:p.servicio, atencion:p.atencion, codigos:p.codigos||[]});
+      lista.push({orden:p.orden, fecha:p.fecha, nombre:p.nombre, servicio:p.servicio, atencion:p.atencion||'', codigos:p.codigos||[]});
       await setDoc(DOC_PACS, {lista: lista});
     }
   } catch(e){ console.error('Error guardando informado',e); }
