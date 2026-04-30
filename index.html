@@ -597,10 +597,15 @@ function abrirInformar(orden){
       document.body.appendChild(overlay);
       document.getElementById('btn-si').onclick=async function(){
         document.body.removeChild(overlay);
-        pacientes=pacientes.filter(function(x){return x.orden!==orden;});
+        // Guardar referencia ANTES de modificar
+        var pp=pacientes.filter(function(x){return x.orden===orden;})[0];
+        // Actualizar estado en lugar de eliminar
+        if(pp) pp.estado='informado';
+        estadoMap[orden]='informado';
+        // Guardar en Firebase
         await saveEstado(orden,'informado');
-      var pp=pacientes.filter(function(x){return x.orden===orden;})[0];
-      await saveInformadoEnFirebase(pp);
+        await saveInformadoEnFirebase(pp);
+        // Rerenderizar
         if(currentUser&&UROLES[currentUser].rol==='admin') renderAdmin(currentAdminTab);
         else if(currentUser) renderMedico();
       };
