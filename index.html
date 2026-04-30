@@ -449,9 +449,9 @@ function filtrarMedico(){
 document.addEventListener('input', function(e){
   if(e.target && e.target.id === 'buscar-admin') filtrarAdmin();
   if(e.target && e.target.id === 'buscar-med') filtrarMedico();
-  if(e.target && e.target.id === 'buscar-inf'){
+  if(e.target && e.target.id === 'buscar-inf' || e.target && e.target.id === 'buscar-inf2'){
     var q=e.target.value.toLowerCase();
-    var tabla=document.getElementById('tabla-inf');
+    var tabla=document.getElementById('tabla-inf') || document.getElementById('tabla-inf2');
     if(tabla) tabla.querySelectorAll('tbody tr').forEach(function(row){
       row.style.display=row.textContent.toLowerCase().includes(q)?'':'none';
     });
@@ -563,11 +563,40 @@ function renderMedico(){
     rowsInf+='<tr><td style="color:#666">'+p.fecha+'</td><td><b>'+p.nombre+'</b></td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-ok">'+(p.codigos?p.codigos.length:0)+'</span></td></tr>';
   });
   var tablaInf=informados.length===0?'':'<div class="card" style="margin-top:1rem"><div class="card-header"><span class="card-title">Mis estudios informados</span><span style="font-size:12px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalRegInf+'</span><input id="buscar-inf" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div><div class="tbl-wrap"><table id="tabla-inf"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rowsInf+'</tbody></table></div></div>';
-  document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
+    var infCount=informados.length;
+  var infReg=totalRegInf;
+  var btnInf=infCount>0?'<button onclick="renderInformados()" style="background:#e6f5ed;border:1px solid #1a7a4a;border-radius:6px;padding:5px 12px;font-size:12px;color:#1a7a4a;cursor:pointer;white-space:nowrap">Informados: '+infCount+' pac · '+infReg+' reg</button>':'';
+  var pendReg=mis.filter(function(p){return p.estado!=='informado';}).reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
+  var headerAsignados='<div class="card"><div class="card-header" style="display:flex;align-items:center;gap:12px">'+btnInf+'<span class="card-title">Mis estudios asignados</span><span style="font-size:13px;color:#666">Pacientes: <b>'+pend+'</b>  ·  Regiones: <b>'+pendReg+'</b></span><input id="buscar-med" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px;margin-left:auto"></div>';
+document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
-  '<div class="grid3"><div class="stat-card"><div class="stat-num">'+mis.length+'</div><div class="stat-label">pacientes &nbsp;·&nbsp; <b>'+mis.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0)+'</b> regiones</div></div><div class="stat-card"><div class="stat-num" style="color:#c0392b">'+pend+'</div><div class="stat-label">pendientes</div></div><div class="stat-card"><div class="stat-num" style="color:#1a7a4a">'+(mis.length-pend)+'</div><div class="stat-label">informados</div></div></div>'+
-  // Tabla informados — vars definidas antes de la concatenación
-  '<div class="card"><div class="card-header"><span class="card-title">Mis estudios asignados</span><input id="buscar-med" type="text" placeholder="Buscar paciente..." oninput="filtrarMedico()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div>'+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+tablaInf+'</div>';
+  headerAsignados++(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+'</div>';
+}
+
+function renderInformados(){
+  var u=UROLES[currentUser];
+  var med=MEDICOS[u.idx];
+  pacientes.forEach(function(p){ p.estado = estadoMap[p.orden] || ''; });
+  var informados=pacientes.filter(function(p){return asignaciones[p.orden]===med.id && p.estado==='informado';});
+  informados.sort(function(a,b){
+    function toNum(f){ var p=f.split('/'); return parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]); }
+    return toNum(b.fecha)-toNum(a.fecha);
+  });
+  var totalReg=informados.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
+  var rows='';
+  informados.forEach(function(p){
+    rows+='<tr><td style="color:#666">'+p.fecha+'</td><td><b>'+p.nombre+'</b></td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-ok">'+(p.codigos?p.codigos.length:0)+'</span></td></tr>';
+  });
+  document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
+  '<div class="main">'+syncBanner()+
+  '<div class="card"><div class="card-header" style="display:flex;align-items:center;gap:12px">'+
+  '<button onclick="renderMedico()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#666" title="Volver">&#8592;</button>'+
+  '<span class="card-title">Mis estudios informados</span>'+
+  '<span style="font-size:13px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalReg+'</span>'+
+  '<input id="buscar-inf2" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px;margin-left:auto">'+
+  '</div>'+
+  (informados.length===0?'<div class="empty">No hay estudios informados aún.</div>':'<div class="tbl-wrap"><table id="tabla-inf2"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+
+  '</div></div>';
 }
 
 async function marcar(orden){
@@ -638,6 +667,7 @@ window.reasignar=reasignar;
 window.reaplicar=reaplicar;
 window.guardar=guardar;
 window.marcar=marcar;
+window.renderInformados=renderInformados;
 window.abrirInformar=abrirInformar;
 
 // ── Iniciar ──────────────────────────────────────────────────────────────────
