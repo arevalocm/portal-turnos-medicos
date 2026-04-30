@@ -374,7 +374,7 @@ function renderAdmin(tab){
   var regiones=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id;}).reduce(function(acc,p){return acc+(p.codigos?p.codigos.length:0);},0);});
   var content='';
   if(tab==='estudios'){
-    content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
+    content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
     pacientes.forEach(function(p){
       content+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+ml(asignaciones[p.orden])+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td><select class="sel-inline" onchange="reasignar(\''+p.orden+'\',this.value)">'+MEDICOS.map(function(m){return'<option value="'+m.id+'"'+(asignaciones[p.orden]===m.id?' selected':'')+'>'+m.nombre.split(' ').pop()+'</option>';}).join('')+'</select></td><td><button class="btn btn-sm" onclick="abrirInformar(\''+p.orden+'\')">Abrir</button></td></tr>';
     });
@@ -426,6 +426,30 @@ async function reasignar(orden,medId){
   await saveAsignaciones();
   await saveOverrides();
 }
+
+function filtrarAdmin(){
+  var q=(document.getElementById('buscar-admin')||{value:''}).value.toLowerCase();
+  var tabla=document.getElementById('tabla-admin');
+  if(!tabla) return;
+  tabla.querySelectorAll('tbody tr').forEach(function(row){
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filtrarMedico(){
+  var q=(document.getElementById('buscar-med')||{value:''}).value.toLowerCase();
+  var tabla=document.getElementById('tabla-med');
+  if(!tabla) return;
+  tabla.querySelectorAll('tbody tr').forEach(function(row){
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// Delegación de eventos para los buscadores (necesario porque están en módulo ES6)
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id === 'buscar-admin') filtrarAdmin();
+  if(e.target && e.target.id === 'buscar-med') filtrarMedico();
+});
 
 async function reaplicar(){
   // Distribución proporcional 44/30/26
@@ -529,7 +553,7 @@ function renderMedico(){
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
   '<div class="grid3"><div class="stat-card"><div class="stat-num">'+mis.length+'</div><div class="stat-label">pacientes &nbsp;·&nbsp; <b>'+mis.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0)+'</b> regiones</div></div><div class="stat-card"><div class="stat-num" style="color:#c0392b">'+pend+'</div><div class="stat-label">pendientes</div></div><div class="stat-card"><div class="stat-num" style="color:#1a7a4a">'+(mis.length-pend)+'</div><div class="stat-label">informados</div></div></div>'+
   // Tabla informados — vars definidas antes de la concatenación
-  '<div class="card"><div class="card-header"><span class="card-title">Mis estudios asignados</span></div>'+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+tablaInf+'</div>';
+  '<div class="card"><div class="card-header"><span class="card-title">Mis estudios asignados</span><input id="buscar-med" type="text" placeholder="Buscar paciente..." oninput="filtrarMedico()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div>'+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+tablaInf+'</div>';
 }
 
 async function marcar(orden){
