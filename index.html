@@ -548,7 +548,7 @@ function renderMedico(){
   informados.forEach(function(p){
     rowsInf+='<tr><td style="color:#666">'+p.fecha+'</td><td><b>'+p.nombre+'</b></td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-ok">'+(p.codigos?p.codigos.length:0)+'</span></td></tr>';
   });
-  var tablaInf=informados.length===0?'':'<div class="card" style="margin-top:1rem"><div class="card-header"><span class="card-title">Mis estudios informados</span><span style="font-size:12px;color:#1a7a4a;font-weight:bold">'+informados.length+' estudios &nbsp;·&nbsp; '+totalRegInf+' regiones</span></div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rowsInf+'</tbody></table></div></div>';
+  var tablaInf=informados.length===0?'':'<div class="card" style="margin-top:1rem"><div class="card-header"><span class="card-title">Mis estudios informados</span><span style="font-size:12px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalRegInf+'</span></div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rowsInf+'</tbody></table></div></div>';
   document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
   '<div class="grid3"><div class="stat-card"><div class="stat-num">'+mis.length+'</div><div class="stat-label">pacientes &nbsp;·&nbsp; <b>'+mis.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0)+'</b> regiones</div></div><div class="stat-card"><div class="stat-num" style="color:#c0392b">'+pend+'</div><div class="stat-label">pendientes</div></div><div class="stat-card"><div class="stat-num" style="color:#1a7a4a">'+(mis.length-pend)+'</div><div class="stat-label">informados</div></div></div>'+
@@ -559,9 +559,10 @@ function renderMedico(){
 async function marcar(orden){
   var p=pacientes.filter(function(x){return x.orden===orden;})[0];
   if(p) p.estado='informado';
+  estadoMap[orden]='informado'; // actualizar el mapa antes de renderizar
   renderMedico();
   await saveEstado(orden,'informado');
-  await saveInformadoEnFirebase(p); // guardar en Firebase para liquidación persistente
+  await saveInformadoEnFirebase(p);
 }
 
 function logout(){
