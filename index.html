@@ -533,6 +533,8 @@ function liquidacionMedico(medId){
 function renderMedico(){
   var u=UROLES[currentUser];
   var med=MEDICOS[u.idx];
+  // Sincronizar estado desde estadoMap antes de filtrar
+  pacientes.forEach(function(p){ p.estado = estadoMap[p.orden] || ''; });
   var mis=pacientes.filter(function(p){return asignaciones[p.orden]===med.id;});
   var pend=mis.filter(function(p){return p.estado!=='informado';}).length;
   // Tabla pendientes
