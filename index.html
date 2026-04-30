@@ -570,7 +570,7 @@ function renderMedico(){
   var headerAsignados='<div class="card"><div class="card-header" style="display:flex;align-items:center;gap:12px">'+btnInf+'<span class="card-title">Mis estudios asignados</span><span style="font-size:13px;color:#666">Pacientes: <b>'+pend+'</b>  ·  Regiones: <b>'+pendReg+'</b></span><input id="buscar-med" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px;margin-left:auto"></div>';
 document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
-  headerAsignados++(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+'</div>';
+  headerAsignados+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+'</div>';
 }
 
 function renderInformados(){
