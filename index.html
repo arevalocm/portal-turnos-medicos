@@ -565,12 +565,12 @@ function renderMedico(){
   var tablaInf=informados.length===0?'':'<div class="card" style="margin-top:1rem"><div class="card-header"><span class="card-title">Mis estudios informados</span><span style="font-size:12px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalRegInf+'</span><input id="buscar-inf" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div><div class="tbl-wrap"><table id="tabla-inf"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rowsInf+'</tbody></table></div></div>';
     var infCount=informados.length;
   var infReg=totalRegInf;
-  var btnInf=infCount>0?'<button onclick="renderInformados()" style="background:#e6f5ed;border:1px solid #1a7a4a;border-radius:6px;padding:5px 12px;font-size:12px;color:#1a7a4a;cursor:pointer;white-space:nowrap">Informados: '+infCount+' pac · '+infReg+' reg</button>':'';
   var pendReg=mis.filter(function(p){return p.estado!=='informado';}).reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
-  var headerAsignados='<div class="card"><div class="card-header" style="display:flex;align-items:center;gap:12px">'+btnInf+'<span class="card-title">Mis estudios asignados</span><span style="font-size:13px;color:#666">Pacientes: <b>'+pend+'</b>  ·  Regiones: <b>'+pendReg+'</b></span><input id="buscar-med" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px;margin-left:auto"></div>';
+  var btnInf=infCount>0?'<div style="position:absolute;left:-190px;top:0;width:175px"><button onclick="renderInformados()" style="width:100%;background:#e6f5ed;border:1px solid #1a7a4a;border-radius:8px;padding:12px 10px;font-size:13px;color:#1a7a4a;cursor:pointer;text-align:center;line-height:1.8"><b>'+infCount+' pacientes</b><br>'+infReg+' regiones<br><span style="font-size:11px;color:#888">Ver informados →</span></button></div>':'';
+  var headerAsignados='<div style="position:relative">'+btnInf+'<div class="card"><div class="card-header"><span class="card-title">Mis estudios asignados</span><span style="font-size:13px;color:#666">Pacientes: <b>'+pend+'</b>  ·  Regiones: <b>'+pendReg+'</b></span><input id="buscar-med" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px;margin-left:auto"></div>';
 document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
-  headerAsignados+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+'</div>';
+  headerAsignados+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div></div></div>';
 }
 
 function renderInformados(){
@@ -668,6 +668,7 @@ window.reaplicar=reaplicar;
 window.guardar=guardar;
 window.marcar=marcar;
 window.renderInformados=renderInformados;
+window.renderMedico=renderMedico;
 window.abrirInformar=abrirInformar;
 
 // ── Iniciar ──────────────────────────────────────────────────────────────────
