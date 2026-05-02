@@ -370,12 +370,14 @@ var currentAdminTab = 'estudios';
 function renderAdmin(tab){
   currentAdminTab = tab;
   var total=pacientes.length;
-  var counts=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id;}).length;});
-  var regiones=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id;}).reduce(function(acc,p){return acc+(p.codigos?p.codigos.length:0);},0);});
+  // Solo contar pendientes (excluir informados) en las tarjetas del admin
+  var counts=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id && estadoMap[p.orden]!=='informado';}).length;});
+  var regiones=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id && estadoMap[p.orden]!=='informado';}).reduce(function(acc,p){return acc+(p.codigos?p.codigos.length:0);},0);});
   var content='';
   if(tab==='estudios'){
     content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
     pacientes.forEach(function(p){
+      if(estadoMap[p.orden]==='informado') return; // ocultar informados en vista admin
       content+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+ml(asignaciones[p.orden])+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td><select class="sel-inline" onchange="reasignar(\''+p.orden+'\',this.value)">'+MEDICOS.map(function(m){return'<option value="'+m.id+'"'+(asignaciones[p.orden]===m.id?' selected':'')+'>'+m.nombre.split(' ').pop()+'</option>';}).join('')+'</select></td><td><button class="btn btn-sm" onclick="abrirInformar(\''+p.orden+'\')">Abrir</button></td></tr>';
     });
     content+='</tbody></table></div></div>';
