@@ -278,11 +278,9 @@ async function saveEstado(orden, estado){
   try { await setDoc(DOC_ESTADO, estadoMap); } catch(e){ console.error('Error guardando estado',e); }
 }
 async function savePacientesExtra(){
-  // Guardar TODOS los informados (no solo los que no están en PACS_DEFAULT)
-  // Así cuando se actualiza la lista y un informado desaparece del RIS,
-  // sigue disponible en Firebase para la liquidación
+  // Guardar TODOS los informados sin excepción
   var informados = pacientes.filter(function(p){
-    return estadoMap[p.orden] === 'informado' && !PACS_DEFAULT.find(function(d){return d.orden===p.orden;});
+    return estadoMap[p.orden] === 'informado';
   });
   try { await setDoc(DOC_PACS, {lista: informados}); } catch(e){ console.error('Error guardando pacientes',e); }
 }
