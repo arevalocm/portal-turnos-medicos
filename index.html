@@ -542,7 +542,10 @@ function renderMedico(){
   var med=MEDICOS[u.idx];
   // Sincronizar estado desde estadoMap antes de filtrar
   pacientes.forEach(function(p){ p.estado = estadoMap[p.orden] || ''; });
-  var mis=pacientes.filter(function(p){return asignaciones[p.orden]===med.id;});
+  // Incluir asignados al médico + extras informados que guardó Firebase
+  var mis=pacientes.filter(function(p){
+    return asignaciones[p.orden]===med.id || (estadoMap[p.orden]==='informado' && !asignaciones[p.orden]);
+  });
   var pend=mis.filter(function(p){return p.estado!=='informado';}).length;
   // Tabla pendientes
   var rows='';
@@ -597,7 +600,10 @@ function renderInformados(){
   var u=UROLES[currentUser];
   var med=MEDICOS[u.idx];
   pacientes.forEach(function(p){ p.estado = estadoMap[p.orden] || ''; });
-  var informados=pacientes.filter(function(p){return asignaciones[p.orden]===med.id && p.estado==='informado';});
+  // Incluir informados asignados al médico + informados guardados en Firebase (pacientes_extra)
+  var informados=pacientes.filter(function(p){
+    return p.estado==='informado' && (asignaciones[p.orden]===med.id || (!asignaciones[p.orden] && estadoMap[p.orden]==='informado'));
+  });
   informados.sort(function(a,b){
     function toNum(f){ var p=f.split('/'); return parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]); }
     return toNum(b.fecha)-toNum(a.fecha);
