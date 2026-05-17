@@ -145,7 +145,6 @@ const DOC_ASIG = doc(db, 'portal', 'asignaciones');
 const DOC_OVER = doc(db, 'portal', 'overrides');
 const DOC_ESTADO = doc(db, 'portal', 'estados');
 const DOC_PACS = doc(db, 'portal', 'pacientes_extra');
-const DOC_LISTA_RIS = doc(db, 'portal', 'lista_ris');
 
 // Cuotas mensuales de códigos por médico
 var CUOTAS={ortega:220, medina:150};
@@ -374,84 +373,6 @@ async function doLogin(){
 // ── Admin ───────────────────────────────────────────────────────────────────
 var currentAdminTab = 'estudios';
 
-async function sincronizarRIS(){
-  var btn = document.getElementById('btn-sync-ris');
-  if(btn){ btn.disabled=true; btn.textContent='Sincronizando...'; }
-
-  function txt(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent.trim(); }
-
-  try {
-    // 1. Obtener la lista de pacientes desde el RIS
-    var resp = await fetch('https://ris.tomografodelestado.com.ar/informe/list_pendientes_medico/', {credentials:'include'});
-    if(!resp.ok) throw new Error('No se pudo acceder al RIS. Asegurate de estar logueado en el RIS.');
-    var html = await resp.text();
-
-    // Parsear el HTML para obtener los datos del DataTable via API
-    var resp2 = await fetch('https://ris.tomografodelestado.com.ar/informe/list_pendientes_medico/?modovista=normal', {credentials:'include'});
-    var html2 = await resp2.text();
-    var doc2 = new DOMParser().parseFromString(html2, 'text/html');
-    
-    // Extraer filas de la tabla
-    var rows = Array.from(doc2.querySelectorAll('#tabla-medicos tbody tr'));
-    if(rows.length === 0) throw new Error('No se encontraron pacientes en el RIS. Verificá que estés logueado.');
-    
-    var pacs = rows.map(function(row){
-      var cells = row.querySelectorAll('td');
-      if(cells.length < 8) return null;
-      var orden = txt(cells[0].innerHTML);
-      var fecha = txt(cells[1].innerHTML);
-      var nombre = txt(cells[4].innerHTML);
-      var servicio = txt(cells[5].innerHTML);
-      var atencion = txt(cells[7].innerHTML);
-      if(!orden.match(/^\d+$/)) return null;
-      return {orden:orden, fecha:fecha, nombre:nombre, servicio:servicio, atencion:atencion, codigos:[]};
-    }).filter(Boolean);
-
-    if(pacs.length === 0) throw new Error('No se pudieron extraer pacientes del RIS.');
-
-    // 2. Obtener códigos de cada paciente
-    async function fetchCodigos(orden){
-      try {
-        var r = await fetch('https://ris.tomografodelestado.com.ar/informe/informe_crearmedico/'+orden+'/', {credentials:'include'});
-        var h = await r.text();
-        var d = new DOMParser().parseFromString(h,'text/html');
-        var codigos = [];
-        d.querySelectorAll('dt').forEach(function(dt){
-          if(dt.textContent.trim()==='Estudios Realizados'){
-            var dd = dt.nextElementSibling;
-            if(dd){ var m=dd.textContent.trim().match(/\d{2}\.\d{2}\.\d{2}/g); codigos=m||[]; }
-          }
-        });
-        return codigos;
-      } catch(e){ return []; }
-    }
-
-    for(var i=0; i<pacs.length; i++){
-      pacs[i].codigos = await fetchCodigos(pacs[i].orden);
-      if(i%10===0 && btn) btn.textContent='Sincronizando... '+i+'/'+pacs.length;
-    }
-
-    // 3. Guardar en Firebase
-    await setDoc(DOC_LISTA_RIS, {lista: pacs, timestamp: new Date().toISOString()});
-
-    // 4. Actualizar en memoria y redistribuir
-    var ordenesSet = new Set(pacs.map(function(p){return p.orden;}));
-    pacientes.forEach(function(p){
-      if(estadoMap[p.orden]==='informado' && !ordenesSet.has(p.orden)) pacs.push(p);
-    });
-    pacientes = pacs;
-    pacientes.forEach(function(p){ p.estado = estadoMap[p.orden]||''; });
-    await reaplicar();
-
-    if(btn){ btn.disabled=false; btn.textContent='↻ Sincronizar RIS'; }
-    alert('✓ Sincronización completada: '+pacs.length+' pacientes actualizados y redistribuidos.');
-
-  } catch(e){
-    if(btn){ btn.disabled=false; btn.textContent='↻ Sincronizar RIS'; }
-    alert('Error: '+e.message);
-  }
-}
-
 function renderAdmin(tab){
   currentAdminTab = tab;
   var total=pacientes.length;
@@ -460,7 +381,7 @@ function renderAdmin(tab){
   var regiones=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id && estadoMap[p.orden]!=='informado';}).reduce(function(acc,p){return acc+(p.codigos?p.codigos.length:0);},0);});
   var content='';
   if(tab==='estudios'){
-    content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button id="btn-sync-ris" class="btn btn-sm" onclick="sincronizarRIS()" style="background:#1a7a4a;color:white">↻ Sincronizar RIS</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
+    content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
     pacientes.forEach(function(p){
       if(estadoMap[p.orden]==='informado') return; // ocultar informados en vista admin
       content+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+ml(asignaciones[p.orden])+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td><select class="sel-inline" onchange="reasignar(\''+p.orden+'\',this.value)">'+MEDICOS.map(function(m){return'<option value="'+m.id+'"'+(asignaciones[p.orden]===m.id?' selected':'')+'>'+m.nombre.split(' ').pop()+'</option>';}).join('')+'</select></td><td><button class="btn btn-sm" onclick="abrirInformar(\''+p.orden+'\')">Abrir</button></td></tr>';
@@ -796,7 +717,6 @@ function abrirInformar(orden){
 
 // ── Exponer funciones globales ───────────────────────────────────────────────
 window.doLogin=doLogin;
-window.sincronizarRIS=sincronizarRIS;
 window.pi=pi;
 window.pk=pk;
 window.logout=logout;
