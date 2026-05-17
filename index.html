@@ -540,8 +540,14 @@ function liquidacionMedico(medId){
 function renderMedico(){
   var u=UROLES[currentUser];
   var med=MEDICOS[u.idx];
-  // Sincronizar estado desde estadoMap antes de filtrar
-  pacientes.forEach(function(p){ p.estado = estadoMap[p.orden] || ''; });
+  // Refrescar estadoMap desde Firebase antes de renderizar para evitar race conditions
+  getDoc(DOC_ESTADO).then(function(snap){
+    if(snap.exists()) estadoMap = snap.data();
+    pacientes.forEach(function(p){ p.estado = estadoMap[p.orden] || ''; });
+    _renderMedicoInner(u, med);
+  }).catch(function(){ _renderMedicoInner(u, med); });
+}
+function _renderMedicoInner(u, med){
   // Incluir asignados al médico + extras informados que guardó Firebase
   var mis=pacientes.filter(function(p){
     return asignaciones[p.orden]===med.id || (estadoMap[p.orden]==='informado' && !asignaciones[p.orden]);
