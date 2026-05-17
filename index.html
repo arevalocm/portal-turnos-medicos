@@ -375,95 +375,80 @@ async function doLogin(){
 var currentAdminTab = 'estudios';
 
 async function sincronizarRIS(){
-  // Buscar la pestaña del RIS
-  var risTab = null;
-  try {
-    var tabs = await new Promise(function(resolve){
-      chrome && chrome.tabs && chrome.tabs.query({url:'*://ris.tomografodelestado.com.ar/*'}, resolve);
-    });
-    if(tabs && tabs.length > 0) risTab = tabs[0].id;
-  } catch(e){}
-
-  if(!risTab){
-    alert('Por favor abrí el RIS (ris.tomografodelestado.com.ar) en otra pestaña del mismo navegador y volvé a intentar.');
-    return;
-  }
-
   var btn = document.getElementById('btn-sync-ris');
   if(btn){ btn.disabled=true; btn.textContent='Sincronizando...'; }
 
+  function txt(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent.trim(); }
+
   try {
-    // Inyectar script de extracción en la pestaña del RIS
-    var result = await new Promise(function(resolve, reject){
-      chrome.scripting.executeScript({
-        target: {tabId: risTab},
-        func: async function(){
-          function txt(html) { const d = document.createElement('div'); d.innerHTML = html; return d.textContent.trim(); }
-          const dt = window.$ && $('#tabla-medicos').DataTable();
-          if(!dt) return {error:'DataTable no encontrado'};
-          const allData = dt.rows().data().toArray();
-          const pacs = allData.map(function(row){
-            return {
-              orden: txt(String(typeof row[0]==='object'?row[0].display:row[0])),
-              fecha: txt(String(row[1])),
-              nombre: txt(String(row[4])),
-              servicio: txt(String(row[5])),
-              atencion: txt(String(row[7])),
-              codigos: []
-            };
-          }).filter(function(p){ return p.orden.match(/^\d+$/); });
+    // 1. Obtener la lista de pacientes desde el RIS
+    var resp = await fetch('https://ris.tomografodelestado.com.ar/informe/list_pendientes_medico/', {credentials:'include'});
+    if(!resp.ok) throw new Error('No se pudo acceder al RIS. Asegurate de estar logueado en el RIS.');
+    var html = await resp.text();
 
-          async function fetchCodigos(orden){
-            try {
-              const resp = await fetch('https://ris.tomografodelestado.com.ar/informe/informe_crearmedico/'+orden+'/', {credentials:'include'});
-              const html = await resp.text();
-              const doc = new DOMParser().parseFromString(html,'text/html');
-              let codigos = [];
-              doc.querySelectorAll('dt').forEach(function(dt){
-                if(dt.textContent.trim()==='Estudios Realizados'){
-                  const dd = dt.nextElementSibling;
-                  if(dd){ const m = dd.textContent.trim().match(/\d{2}\.\d{2}\.\d{2}/g); codigos = m||[]; }
-                }
-              });
-              return codigos;
-            } catch(e){ return []; }
-          }
+    // Parsear el HTML para obtener los datos del DataTable via API
+    var resp2 = await fetch('https://ris.tomografodelestado.com.ar/informe/list_pendientes_medico/?modovista=normal', {credentials:'include'});
+    var html2 = await resp2.text();
+    var doc2 = new DOMParser().parseFromString(html2, 'text/html');
+    
+    // Extraer filas de la tabla
+    var rows = Array.from(doc2.querySelectorAll('#tabla-medicos tbody tr'));
+    if(rows.length === 0) throw new Error('No se encontraron pacientes en el RIS. Verificá que estés logueado.');
+    
+    var pacs = rows.map(function(row){
+      var cells = row.querySelectorAll('td');
+      if(cells.length < 8) return null;
+      var orden = txt(cells[0].innerHTML);
+      var fecha = txt(cells[1].innerHTML);
+      var nombre = txt(cells[4].innerHTML);
+      var servicio = txt(cells[5].innerHTML);
+      var atencion = txt(cells[7].innerHTML);
+      if(!orden.match(/^\d+$/)) return null;
+      return {orden:orden, fecha:fecha, nombre:nombre, servicio:servicio, atencion:atencion, codigos:[]};
+    }).filter(Boolean);
 
-          for(let i=0; i<pacs.length; i++){
-            pacs[i].codigos = await fetchCodigos(pacs[i].orden);
+    if(pacs.length === 0) throw new Error('No se pudieron extraer pacientes del RIS.');
+
+    // 2. Obtener códigos de cada paciente
+    async function fetchCodigos(orden){
+      try {
+        var r = await fetch('https://ris.tomografodelestado.com.ar/informe/informe_crearmedico/'+orden+'/', {credentials:'include'});
+        var h = await r.text();
+        var d = new DOMParser().parseFromString(h,'text/html');
+        var codigos = [];
+        d.querySelectorAll('dt').forEach(function(dt){
+          if(dt.textContent.trim()==='Estudios Realizados'){
+            var dd = dt.nextElementSibling;
+            if(dd){ var m=dd.textContent.trim().match(/\d{2}\.\d{2}\.\d{2}/g); codigos=m||[]; }
           }
-          return {pacs: pacs, total: pacs.length};
-        }
-      }, function(results){
-        if(chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-        else if(results && results[0]) resolve(results[0].result);
-        else reject(new Error('Sin resultado'));
-      });
+        });
+        return codigos;
+      } catch(e){ return []; }
+    }
+
+    for(var i=0; i<pacs.length; i++){
+      pacs[i].codigos = await fetchCodigos(pacs[i].orden);
+      if(i%10===0 && btn) btn.textContent='Sincronizando... '+i+'/'+pacs.length;
+    }
+
+    // 3. Guardar en Firebase
+    await setDoc(DOC_LISTA_RIS, {lista: pacs, timestamp: new Date().toISOString()});
+
+    // 4. Actualizar en memoria y redistribuir
+    var ordenesSet = new Set(pacs.map(function(p){return p.orden;}));
+    pacientes.forEach(function(p){
+      if(estadoMap[p.orden]==='informado' && !ordenesSet.has(p.orden)) pacs.push(p);
     });
-
-    if(result.error) throw new Error(result.error);
-    
-    var nuevaLista = result.pacs;
-    
-    // Guardar en Firebase
-    await setDoc(DOC_LISTA_RIS, {lista: nuevaLista, timestamp: new Date().toISOString()});
-    
-    // Actualizar en memoria
-    var ordenes = new Set(nuevaLista.map(function(p){return p.orden;}));
-    // Mantener informados que ya no están en el RIS
-    extra.forEach(function(p){ if(p && p.orden && !ordenes.has(p.orden)) nuevaLista.push(p); });
-    pacientes = nuevaLista;
+    pacientes = pacs;
     pacientes.forEach(function(p){ p.estado = estadoMap[p.orden]||''; });
-    
-    // Redistribuir solo los que no tienen médico asignado
     await reaplicar();
-    
+
     if(btn){ btn.disabled=false; btn.textContent='↻ Sincronizar RIS'; }
-    alert('Sincronización completada: '+result.total+' pacientes');
-    
+    alert('✓ Sincronización completada: '+pacs.length+' pacientes actualizados y redistribuidos.');
+
   } catch(e){
     if(btn){ btn.disabled=false; btn.textContent='↻ Sincronizar RIS'; }
-    alert('Error al sincronizar: '+e.message);
+    alert('Error: '+e.message);
   }
 }
 
