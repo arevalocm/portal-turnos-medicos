@@ -233,11 +233,34 @@ async function loadFromFirebase(){
     overrides = snapO.exists() ? snapO.data() : {};
   } catch(e){ overrides={}; }
 
-  // Cargar estados
-  try {
-    const snapE = await getDoc(DOC_ESTADO);
-    estadoMap = snapE.exists() ? snapE.data() : {};
-  } catch(e){ estadoMap={}; }
+  // Cargar estados con reintentos — nunca dejar estadoMap vacío si hubo datos antes
+  var estadoCargado = false;
+  for(var intento=0; intento<3; intento++){
+    try {
+      const snapE = await getDoc(DOC_ESTADO);
+      if(snapE.exists()){
+        estadoMap = snapE.data();
+        estadoCargado = true;
+        break;
+      } else {
+        estadoMap = {};
+        estadoCargado = true;
+        break;
+      }
+    } catch(e){
+      if(intento < 2) await new Promise(r=>setTimeout(r, 1500));
+    }
+  }
+  if(!estadoCargado){
+    // Si falló 3 veces, intentar usar el respaldo de sessionStorage
+    try {
+      var backup = sessionStorage.getItem('estadoMap_backup');
+      if(backup){ estadoMap = JSON.parse(backup); console.warn('estadoMap cargado desde respaldo local'); }
+    } catch(e){}
+  } else {
+    // Actualizar respaldo local con datos frescos de Firebase
+    try { sessionStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
+  }
 
   // Cargar pacientes extra
   try {
@@ -248,15 +271,7 @@ async function loadFromFirebase(){
         extra = snapP.data().lista;
       }
     } catch(e){ extra = []; }
-    // Intentar usar lista_ris de Firebase (más actualizada que PACS_DEFAULT)
-    try {
-      const snapR = await getDoc(DOC_LISTA_RIS);
-      if(snapR.exists() && snapR.data().lista && snapR.data().lista.length > 0){
-        pacientes = snapR.data().lista.slice();
-      } else {
-        pacientes = PACS_DEFAULT.slice();
-      }
-    } catch(e){ pacientes = PACS_DEFAULT.slice(); }
+    pacientes = PACS_DEFAULT.slice();
     var ordenes = new Set(pacientes.map(p=>p.orden));
     extra.forEach(function(p){ if(p && p.orden && !ordenes.has(p.orden)) pacientes.push(p); });
   } catch(e){ pacientes = PACS_DEFAULT.slice(); }
@@ -284,6 +299,8 @@ async function saveOverrides(){
 async function saveEstado(orden, estado){
   estadoMap[orden] = estado;
   try { await setDoc(DOC_ESTADO, estadoMap); } catch(e){ console.error('Error guardando estado',e); }
+  // Respaldo local
+  try { sessionStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
 }
 async function savePacientesExtra(){
   // Guardar TODOS los informados sin excepción
