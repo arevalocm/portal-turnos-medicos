@@ -735,6 +735,10 @@ function abrirInformar(orden){
 // ── Exponer funciones globales ───────────────────────────────────────────────
 window.doLogin=doLogin;
 window.pi=pi;
+// Exponer estado global para debugging
+Object.defineProperty(window,'_estadoMap',{get:function(){return estadoMap;},set:function(v){estadoMap=v;}});
+Object.defineProperty(window,'_pacientes',{get:function(){return pacientes;}});
+Object.defineProperty(window,'_asignaciones',{get:function(){return asignaciones;}});
 window.pk=pk;
 window.logout=logout;
 window.renderAdmin=renderAdmin;
