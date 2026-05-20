@@ -252,14 +252,14 @@ async function loadFromFirebase(){
     }
   }
   if(!estadoCargado){
-    // Si falló 3 veces, intentar usar el respaldo de sessionStorage
+    // Si falló 3 veces, intentar usar el respaldo de localStorage
     try {
-      var backup = sessionStorage.getItem('estadoMap_backup');
+      var backup = localStorage.getItem('estadoMap_backup');
       if(backup){ estadoMap = JSON.parse(backup); console.warn('estadoMap cargado desde respaldo local'); }
     } catch(e){}
   } else {
     // Actualizar respaldo local con datos frescos de Firebase
-    try { sessionStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
+    try { localStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
   }
 
   // Cargar pacientes extra
@@ -300,7 +300,7 @@ async function saveEstado(orden, estado){
   estadoMap[orden] = estado;
   try { await setDoc(DOC_ESTADO, estadoMap); } catch(e){ console.error('Error guardando estado',e); }
   // Respaldo local
-  try { sessionStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
+  try { localStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
 }
 async function savePacientesExtra(){
   // Guardar TODOS los informados sin excepción
@@ -339,6 +339,7 @@ function startLiveSync(){
       if(p.estado !== newE){ p.estado=newE; changed=true; }
     });
     estadoMap = newEstados;
+    try { localStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
     if(changed && currentUser){
       if(UROLES[currentUser].rol==='admin') renderAdmin(currentAdminTab);
       else renderMedico();
