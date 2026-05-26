@@ -486,20 +486,30 @@ document.addEventListener('input', function(e){
 
 async function reaplicar(){
   // Distribución proporcional 44/30/26
-  // RESPETA asignaciones existentes — solo asigna los estudios SIN médico todavía
+  // Redistribuye desde cero solo los pacientes ACTUALES (PACS_DEFAULT)
+  // Ignora asignaciones viejas de Firebase que ya no están en la lista actual
+  var ordenesActuales = {};
+  pacientes.forEach(function(p){ ordenesActuales[p.orden] = true; });
+
+  // Limpiar asignaciones viejas que no están en la lista actual
+  Object.keys(asignaciones).forEach(function(k){
+    if(!ordenesActuales[k]) delete asignaciones[k];
+  });
+
   var acum={ortega:0,medina:0,arevalo:0};
 
-  // Paso 1: contabilizar lo que ya está asignado
+  // Paso 1: respetar overrides y asignaciones manuales (reasignaciones del admin)
   pacientes.forEach(function(p){
-    var med=asignaciones[p.orden];
+    var med = overrides[p.orden] || null;
     if(med && acum[med]!==undefined){
+      asignaciones[p.orden] = med;
       acum[med]+=(p.codigos?p.codigos.length:1);
     }
   });
 
-  // Paso 2: asignar solo los estudios sin médico
+  // Paso 2: asignar proporcionalmente los que no tienen override
   pacientes.forEach(function(p){
-    if(asignaciones[p.orden]) return; // ya tiene médico, respetar
+    if(overrides[p.orden]) return; // ya manejado arriba
     var s=(p.servicio||'').toUpperCase();
     var rm=s.indexOf('RESONAN')>=0||s.indexOf('RESONADOR')>=0||s.indexOf('IRM')>=0;
     if(rm){asignaciones[p.orden]='medina';acum.medina+=(p.codigos?p.codigos.length:1);return;}
@@ -516,7 +526,6 @@ async function reaplicar(){
     acum[elegido]+=nCods;
   });
 
-  Object.keys(overrides).forEach(function(k){asignaciones[k]=overrides[k];});
   renderAdmin('estudios');
   await saveAsignaciones();
 }
