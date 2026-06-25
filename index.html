@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="version" content="202606252236">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portal de Turnos v3</title>
+<!-- v202606252236 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#f0f0ee;color:#1a1917;font-size:14px}
@@ -1046,44 +1048,60 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
       'style="background:#fff;color:#1a3a6e;border:none;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;cursor:pointer">📄 PDF</button>';
     html+='</div></div>';
 
-    // Contenido colapsable
-    html+='<div id="'+secId+'" style="display:none;border:1px solid #e0e6f0;border-top:none;border-radius:0 0 7px 7px;overflow-x:auto">';
-    html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-    html+='<thead><tr style="background:#f0f4fa">';
-    html+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Orden</th>';
-    html+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Fecha</th>';
-    html+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Paciente</th>';
-    html+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Servicio</th>';
-    html+='<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ddd">Tipo</th>';
-    html+='<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ddd">Reg.</th>';
-    html+='<th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd">Monto</th>';
-    html+='</tr></thead><tbody>';
-    estudios.forEach(function(p,i){
-      var rm=esRMliq(p.servicio);
-      var regs=p.codigos?p.codigos.length:0;
-      var monto=regs*(rm?VRM:VTC);
-      var bg=i%2===0?'#fff':'#f8f9fc';
-      html+='<tr style="background:'+bg+';border-bottom:1px solid #f0f0f0">';
-      html+='<td style="padding:5px 8px;color:#666;font-size:11px">'+p.orden+'</td>';
-      html+='<td style="padding:5px 8px">'+p.fecha+'</td>';
-      html+='<td style="padding:5px 8px;font-weight:500">'+p.nombre+'</td>';
-      html+='<td style="padding:5px 8px;color:#555;font-size:11px">'+p.servicio+'</td>';
-      html+='<td style="padding:5px 8px;text-align:center"><span style="background:'+(rm?'#7a4a1a':'#1a3a6e')+';color:#fff;padding:2px 7px;border-radius:10px;font-size:10px">'+(rm?'RM':'TC')+'</span></td>';
-      html+='<td style="padding:5px 8px;text-align:center;font-weight:700">'+regs+'</td>';
-      html+='<td style="padding:5px 8px;text-align:right;font-weight:600;color:'+(rm?'#7a4a1a':'#1a7a4a')+'">$'+monto.toLocaleString('es-AR')+'</td>';
-      html+='</tr>';
-    });
-    // Fila totales
-    html+='<tr style="background:#e8edf5;font-weight:700">';
-    html+='<td colspan="4" style="padding:7px 8px;border-top:2px solid #1a3a6e"></td>';
-    if(tcR>0&&rmR>0){
-      html+='<td colspan="2" style="padding:7px 8px;text-align:center;border-top:2px solid #1a3a6e;font-size:11px">TC: '+tcR+' reg · RM: '+rmR+' reg</td>';
-    } else {
-      html+='<td colspan="2" style="padding:7px 8px;text-align:center;border-top:2px solid #1a3a6e">'+totalR+' regiones</td>';
+    // Contenido colapsable — secciones TC y RM separadas
+    html+='<div id="'+secId+'" style="display:none;border:1px solid #e0e6f0;border-top:none;border-radius:0 0 7px 7px;overflow:hidden">';
+    // Función para generar tabla de una sección
+    function secTab(lista, tipo, col){
+      if(lista.length===0) return '';
+      var regsT=lista.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
+      var montoT=regsT*(tipo==='RM'?VRM:VTC);
+      var bgHead=tipo==='RM'?'#f5ece8':'#e8edf5';
+      var s='<div style="padding:6px 12px;background:'+col+';color:#fff;font-size:11px;font-weight:700">'+
+        (tipo==='TC'?'TOMOGRAFÍA COMPUTADA (TC)':'RESONANCIA MAGNÉTICA (RM)')+
+        ' — '+lista.length+' estudios</div>';
+      s+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+      s+='<thead><tr style="background:'+bgHead+'">';
+      s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Orden</th>';
+      s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Fecha</th>';
+      s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Paciente</th>';
+      s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Servicio</th>';
+      s+='<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ddd">Reg.</th>';
+      s+='<th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd">Monto</th>';
+      s+='</tr></thead><tbody>';
+      lista.forEach(function(p,i){
+        var regs=p.codigos?p.codigos.length:0;
+        var monto=regs*(tipo==='RM'?VRM:VTC);
+        s+='<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+';border-bottom:1px solid #f0f0f0">';
+        s+='<td style="padding:5px 8px;color:#666;font-size:11px">'+p.orden+'</td>';
+        s+='<td style="padding:5px 8px">'+p.fecha+'</td>';
+        s+='<td style="padding:5px 8px;font-weight:500">'+p.nombre+'</td>';
+        s+='<td style="padding:5px 8px;color:#555;font-size:11px">'+p.servicio+'</td>';
+        s+='<td style="padding:5px 8px;text-align:center;font-weight:700">'+regs+'</td>';
+        s+='<td style="padding:5px 8px;text-align:right;font-weight:600;color:'+col+'">$'+monto.toLocaleString('es-AR')+'</td>';
+        s+='</tr>';
+      });
+      s+='<tr style="background:'+bgHead+';font-weight:700">';
+      s+='<td colspan="4" style="padding:7px 8px;text-align:right;border-top:2px solid '+col+'">SUBTOTAL '+tipo+'</td>';
+      s+='<td style="padding:7px 8px;text-align:center;border-top:2px solid '+col+'">'+regsT+'</td>';
+      s+='<td style="padding:7px 8px;text-align:right;border-top:2px solid '+col+';color:'+col+'">$'+montoT.toLocaleString('es-AR')+'</td>';
+      s+='</tr></tbody></table>';
+      return s;
     }
-    html+='<td style="padding:7px 8px;text-align:right;border-top:2px solid #1a3a6e;color:#1a3a6e">$'+totalM.toLocaleString('es-AR')+'</td>';
-    html+='</tr>';
-    html+='</tbody></table></div></div>';
+    html+=secTab(tcE,'TC','#1a3a6e');
+    if(tcE.length>0 && rmE.length>0) html+='<div style="height:4px;background:#f0f4fa"></div>';
+    html+=secTab(rmE,'RM','#7a4a1a');
+    // Fila total general — siempre visible
+    html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html+='<tr style="background:#1a1a4e;color:#fff;font-weight:700">';
+    html+='<td colspan="4" style="padding:9px 12px;font-size:13px">TOTAL GENERAL</td>';
+    if(tcE.length>0 && rmE.length>0){
+      html+='<td style="padding:9px 12px;text-align:center;font-size:12px">TC: '+tcR+' · RM: '+rmR+'<br><span style="font-size:13px;font-weight:700">'+totalR+' reg</span></td>';
+    } else {
+      html+='<td style="padding:9px 12px;text-align:center;font-size:13px;font-weight:700">'+totalR+' reg</td>';
+    }
+    html+='<td style="padding:9px 12px;text-align:right;font-size:15px;font-weight:700">$'+totalM.toLocaleString('es-AR')+'</td>';
+    html+='</tr></table>';
+    html+='</div></div>';
   });
 
   html+='</div></div>';
@@ -1098,6 +1116,23 @@ window.toggleMiLiq=function(el){
   if(!s) return;
   if(s.style.display==='none'){s.style.display='block';if(a)a.textContent='▾';}
   else{s.style.display='none';if(a)a.textContent='▸';}
+};
+window.renderMiLiquidacion_page=function(){
+  var u=UROLES[currentUser];
+  var med=MEDICOS[u.idx];
+  var html=renderMiLiquidacion(med.id, window._pacientes||pacientes, window._estadoMap||estadoMap);
+  if(!html){
+    html='<div class="card"><div style="padding:2rem;text-align:center;color:#999">Sin estudios informados aún.</div></div>';
+  }
+  document.getElementById('root').innerHTML=
+    topbar(med.nombre,med.ini,med.av)+
+    '<div class="main">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">'+
+    '<button onclick="renderMedico()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#666" title="Volver">&#8592;</button>'+
+    '<span style="font-weight:700;font-size:16px;color:#1a3a6e">📊 Mi Liquidación</span>'+
+    '</div>'+
+    html+
+    '</div></div>';
 };
 window.exportarMiLiqPDF=function(medId, mesSel){
   var allPacs=(window._pacientes&&window._pacientes.length>0)?window._pacientes:pacientes;
@@ -1301,15 +1336,14 @@ function _renderMedicoInner(u, med){
   var nomAnt=mesesNombres[parseInt(mmAnt)-1];
   var btnAct=cAct.pac>0?'<button onclick="renderInformados(\'' +mmAct+'/'+yyAct+ '\')" style="width:100%;background:#e6f5ed;border:1px solid #1a7a4a;border-radius:8px;padding:10px 8px;font-size:12px;color:#1a7a4a;cursor:pointer;text-align:center;line-height:1.6;margin-bottom:6px"><b>'+nomAct+'</b><br>'+cAct.pac+' pac · '+cAct.reg+' reg</button>':'';
   var btnAnt=cAnt.pac>0?'<button onclick="renderInformados(\'' +mmAnt+'/'+yyAnt+ '\')" style="width:100%;background:#f0f8f4;border:1px solid #a0c8b0;border-radius:8px;padding:10px 8px;font-size:12px;color:#1a7a4a;cursor:pointer;text-align:center;line-height:1.6;margin-bottom:6px"><b>'+nomAnt+'</b><br>'+cAnt.pac+' pac · '+cAnt.reg+' reg</button>':'';
-  var verLink=infCount>0?'<div style="text-align:center;font-size:11px;color:#888;margin-top:2px">Ver informados →</div>':'';
-  var btnInf=infCount>0?btnAct+btnAnt+verLink:'';
+  var btnLiq=infCount>0?'<button onclick="renderMiLiquidacion_page()" style="width:100%;background:#1a3a6e;color:#fff;border:none;border-radius:8px;padding:10px 8px;font-size:12px;cursor:pointer;text-align:center;line-height:1.6;margin-bottom:6px;font-weight:600">📊 Mi Liquidación</button>':'';
+  var btnInf=infCount>0?btnAct+btnAnt+btnLiq:'';
   var headerAsignados='<div class="card"><div class="card-header"><span class="card-title">Mis estudios asignados</span><span style="font-size:13px;color:#666">Pacientes: <b>'+pend+'</b>  ·  Regiones: <b>'+pendReg+'</b></span><input id="buscar-med" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px;margin-left:auto"></div>';
 document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
   '<div style="position:relative">'+
   (btnInf?'<div style="position:absolute;left:-200px;top:0;width:185px">'+btnInf+'</div>':'')+
   headerAsignados+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+
-  renderMiLiquidacion(med.id, window._pacientes||pacientes, window._estadoMap||estadoMap)+
   '</div></div></div>';
 }
 
