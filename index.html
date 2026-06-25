@@ -458,7 +458,7 @@ function renderAdmin(tab){
     selMes+='</select>';
     selMes+='<button onclick="exportarLiqCSV(\'medina\')" class="btn btn-sm" style="background:#1a3a6e;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">⬇ Medina</button>';
     selMes+='<button onclick="exportarLiqCSV(\'ortega\')" class="btn btn-sm" style="background:#4a1a7a;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">⬇ Ortega</button>';
-    selMes+='<button onclick="exportarLiqCSV(\'arevalo_med\')" class="btn btn-sm" style="background:#1a7a4a;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">⬇ Arévalo</button>';
+    selMes+='<button onclick="exportarLiqCSV(\'arevalo\')" class="btn btn-sm" style="background:#1a7a4a;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">⬇ Arévalo</button>';
     selMes+='<button onclick="toggleConfigLiq()" class="btn btn-sm" style="background:#888;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px" title="Editar valores por región">⚙ Valores</button>';
     selMes+='</div>';
 
@@ -473,7 +473,7 @@ function renderAdmin(tab){
     panelConfig+='<button onclick="guardarConfigLiq()" style="background:#1a7a4a;color:#fff;border:none;padding:8px 18px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;margin-top:16px">Guardar</button>';
     panelConfig+='<span id="msg-config-liq" style="font-size:12px;color:#1a7a4a;margin-top:16px"></span>';
     panelConfig+='</div></div>';
-    var mn={arevalo_med:'Dr. Carlos Arévalo',ortega:'Dra. Cinthya Ortega',medina:'Dr. Gabriel Medina'};
+    var mn={arevalo:'Dr. Carlos Arévalo',ortega:'Dra. Cinthya Ortega',medina:'Dr. Gabriel Medina'};
     var tbl='<div class="card"><div class="card-header"><span class="card-title">Liquidación mensual — '+(mesSel||'Sin período seleccionado')+'</span>'+selMes+'</div>'+panelConfig;
 
     if(!mesSel||mksDisp.length===0){
@@ -488,7 +488,7 @@ function renderAdmin(tab){
       });
 
       // Resumen general
-      var resumen={medina:{tc:0,rm:0,tcR:0,rmR:0},ortega:{tc:0,rm:0,tcR:0,rmR:0},arevalo_med:{tc:0,rm:0,tcR:0,rmR:0}};
+      var resumen={medina:{tc:0,rm:0,tcR:0,rmR:0},ortega:{tc:0,rm:0,tcR:0,rmR:0},arevalo:{tc:0,rm:0,tcR:0,rmR:0}};
       estudiosMes.forEach(function(p){
         var med=todasAsignaciones[p.orden];
         if(!resumen[med]) return;
@@ -499,7 +499,7 @@ function renderAdmin(tab){
 
       // Tarjetas resumen
       tbl+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:1rem 1rem 0">';
-      ['medina','ortega','arevalo_med'].forEach(function(med){
+      ['medina','ortega','arevalo'].forEach(function(med){
         var r=resumen[med];
         var totalR=r.tcR+r.rmR;
         var monto=(r.tcR*VAL_TC)+(r.rmR*VAL_RM);
@@ -515,7 +515,7 @@ function renderAdmin(tab){
       tbl+='</div>';
 
       // Tabla detalle por médico
-      ['medina','ortega','arevalo_med'].forEach(function(med){
+      ['medina','ortega','arevalo'].forEach(function(med){
         var estudios=estudiosMes.filter(function(p){return todasAsignaciones[p.orden]===med;});
         if(estudios.length===0) return;
         tbl+='<div style="padding:1rem 1rem 0"><div style="font-weight:700;color:#1a3a6e;font-size:13px;padding:6px 0;border-bottom:2px solid #e0e6f0;margin-bottom:6px">'+mn[med]+'</div>';
@@ -597,7 +597,7 @@ function renderAdmin(tab){
         var fa=a.fecha.split('/').reverse().join(''),fb=b.fecha.split('/').reverse().join('');
         return fa>fb?1:fa<fb?-1:0;
       });
-      var mn2={medina:'Dr. Gabriel Medina',ortega:'Dra. Cinthya Ortega',arevalo_med:'Dr. Carlos Arévalo'};
+      var mn2={medina:'Dr. Gabriel Medina',ortega:'Dra. Cinthya Ortega',arevalo:'Dr. Carlos Arévalo'};
       var periodo=mesSel;
       var nombreMed=mn2[medId]||medId;
       var VAL_TC2=CONFIG_LIQ.val_tc||5250,VAL_RM2=CONFIG_LIQ.val_rm||7000;
