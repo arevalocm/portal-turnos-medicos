@@ -152,6 +152,7 @@ var CUOTAS={ortega:220, medina:150};
 
 // Valores de liquidación (editables por admin, persisten en Firebase)
 var CONFIG_LIQ={val_tc:5250, val_rm:7000};
+window.CONFIG_LIQ=CONFIG_LIQ;
 
 function diasEnMes(yy, mm){
   // yy: 2 dígitos (ej "26"), mm: 2 dígitos (ej "04")
@@ -286,6 +287,7 @@ async function loadFromFirebase(){
     if(snapC.exists() && snapC.data().val_tc) {
       CONFIG_LIQ.val_tc = snapC.data().val_tc;
       CONFIG_LIQ.val_rm = snapC.data().val_rm;
+      window.CONFIG_LIQ = CONFIG_LIQ;
     }
   } catch(e){ /* usa defaults */ }
 
@@ -420,9 +422,10 @@ function renderAdmin(tab){
     content+='</tbody></table></div></div>';
   } else if(tab==='liquidacion'){
     // ── Valores por región (desde Firebase, editables por admin) ──
-    var VAL_TC=CONFIG_LIQ.val_tc||5250, VAL_RM=CONFIG_LIQ.val_rm||7000;
+    var _cfg=(typeof CONFIG_LIQ!=='undefined')?CONFIG_LIQ:{val_tc:5250,val_rm:7000};
+    var VAL_TC=_cfg.val_tc||5250, VAL_RM=_cfg.val_rm||7000;
     // Usar SIEMPRE window._pacientes para tener el historial completo
-    var todosLosPacientes=window._pacientes||pacientes;
+    var todosLosPacientes=(window._pacientes&&window._pacientes.length>0)?window._pacientes:pacientes;
     var todosEstadoMap=window._estadoMap||estadoMap;
     var todasAsignaciones=window._asignaciones||asignaciones;
     // Determinar si un estudio es RM según servicio
