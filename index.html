@@ -416,7 +416,30 @@ function renderAdmin(tab){
   var regiones=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id && estadoMap[p.orden]!=='informado';}).reduce(function(acc,p){return acc+(p.codigos?p.codigos.length:0);},0);});
   var content='';
   if(tab==='estudios'){
-    content='<div class="card"><div class="card-header"><span class="card-title">Todos los pacientes <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
+    // Card búsqueda global (historial completo)
+    var cardBusqGlobal='<div class="card" style="margin-bottom:1rem">'+
+      '<div class="card-header"><span class="card-title">🔍 Buscar en historial completo</span>'+
+      '<span style="font-size:12px;color:#888">Pendientes + informados + finalizados</span></div>'+
+      '<div style="padding:0.75rem 1rem;display:flex;gap:10px;align-items:center">'+
+      '<input id="buscar-global" type="text" placeholder="Nombre o número de orden..." '+
+        'oninput="buscarGlobal()" '+
+        'style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;max-width:400px">'+
+      '<span id="buscar-global-count" style="font-size:12px;color:#888"></span>'+
+      '</div>'+
+      '<div id="buscar-global-results" style="display:none;padding:0 1rem 1rem">'+
+      '<table style="width:100%;border-collapse:collapse;font-size:12px">'+
+      '<thead><tr style="background:#f0f4fa">'+
+      '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Orden</th>'+
+      '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Fecha</th>'+
+      '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Paciente</th>'+
+      '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Servicio</th>'+
+      '<th style="padding:7px 8px;text-align:center;border-bottom:1px solid #ddd">Reg.</th>'+
+      '<th style="padding:7px 8px;text-align:center;border-bottom:1px solid #ddd">Estado</th>'+
+      '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid #ddd">Médico</th>'+
+      '</tr></thead>'+
+      '<tbody id="buscar-global-tbody"></tbody>'+
+      '</table></div></div>';
+    content=cardBusqGlobal+'<div class="card"><div class="card-header"><span class="card-title">Todos los pacientes <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
     pacientes.forEach(function(p){
       if(estadoMap[p.orden]==='informado') return; // ocultar informados en vista admin
       content+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+ml(asignaciones[p.orden])+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td><select class="sel-inline" onchange="reasignar(\''+p.orden+'\',this.value)">'+MEDICOS.map(function(m){return'<option value="'+m.id+'"'+(asignaciones[p.orden]===m.id?' selected':'')+'>'+m.nombre.split(' ').pop()+'</option>';}).join('')+'</select></td><td><button class="btn btn-sm" onclick="abrirInformar(\''+p.orden+'\')">Abrir</button></td></tr>';
@@ -892,6 +915,57 @@ async function reasignar(orden,medId){
   renderAdmin('estudios');
   await saveAsignaciones();
   await saveOverrides();
+}
+
+window.buscarGlobal=function buscarGlobal(){
+  var inp=document.getElementById('buscar-global');
+  var tbody=document.getElementById('buscar-global-tbody');
+  var results=document.getElementById('buscar-global-results');
+  var countEl=document.getElementById('buscar-global-count');
+  if(!inp||!tbody||!results) return;
+  var q=inp.value.trim().toLowerCase();
+  if(q.length<2){
+    results.style.display='none';
+    if(countEl) countEl.textContent='';
+    return;
+  }
+  var allPacs=window._pacientes||pacientes;
+  var allEstado=window._estadoMap||estadoMap;
+  var allAsig=window._asignaciones||asignaciones;
+  var mn={medina:'Dr. Medina',ortega:'Dra. Ortega',arevalo:'Dr. Arévalo'};
+  var estadoLabel={'informado':'<span style="background:#1a7a4a;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px">Informado</span>',
+    'pendiente':'<span style="background:#e8a020;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px">Pendiente</span>',
+    'finalizado':'<span style="background:#555;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px">Finalizado</span>'};
+  var found=allPacs.filter(function(p){
+    return p.nombre.toLowerCase().indexOf(q)!==-1 || p.orden.indexOf(q)!==-1;
+  });
+  found.sort(function(a,b){
+    var fa=a.fecha.split('/').reverse().join('');
+    var fb=b.fecha.split('/').reverse().join('');
+    return fb>fa?1:fb<fa?-1:0;
+  });
+  if(countEl) countEl.textContent=found.length>0?found.length+' resultado'+(found.length===1?'':'s'):'Sin resultados';
+  if(found.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="padding:1rem;text-align:center;color:#999">Sin resultados para "'+q+'"</td></tr>';
+  } else {
+    tbody.innerHTML=found.slice(0,50).map(function(p){
+      var est=allEstado[p.orden]||'pendiente';
+      var med=allAsig[p.orden]||'';
+      var regs=p.codigos?p.codigos.length:0;
+      var rowBg=est==='informado'?'#f0faf4':est==='finalizado'?'#f5f5f5':'#fff';
+      return '<tr style="background:'+rowBg+';border-bottom:1px solid #f0f0f0">'+
+        '<td style="padding:5px 8px;color:#666;font-size:11px">'+p.orden+'</td>'+
+        '<td style="padding:5px 8px;font-size:12px">'+p.fecha+'</td>'+
+        '<td style="padding:5px 8px;font-weight:600;font-size:12px">'+p.nombre+'</td>'+
+        '<td style="padding:5px 8px;color:#555;font-size:11px">'+p.servicio+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-weight:700">'+regs+'</td>'+
+        '<td style="padding:5px 8px;text-align:center">'+(estadoLabel[est]||est)+'</td>'+
+        '<td style="padding:5px 8px;font-weight:600;color:#1a3a6e">'+(mn[med]||med||'<span style="color:#aaa">Sin asignar</span>')+'</td>'+
+        '</tr>';
+    }).join('');
+    if(found.length>50) tbody.innerHTML+='<tr><td colspan="7" style="padding:6px 8px;text-align:center;font-size:11px;color:#888">Mostrando los 50 más recientes de '+found.length+' resultados</td></tr>';
+  }
+  results.style.display='block';
 }
 
 function filtrarAdmin(){
