@@ -382,7 +382,7 @@ function syncBanner(){
 
 // ── Login ───────────────────────────────────────────────────────────────────
 function renderLogin(err){
-  document.getElementById('root').innerHTML='<div class="login-wrap"><div class="login-card"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem">Tomógrafo del Estado S.E.</div><div class="login-title">Portal de Turnos</div><div class="login-sub">Ingresá tu usuario y PIN para ver tus estudios</div><div class="field"><label>Usuario</label><select id="usr"><option value="">Seleccioná tu nombre...</option><option value="medina">Dr. Gabriel Medina</option><option value="ortega">Dra. Cinthya Ortega</option><option value="arevalo_med">Dr. Carlos Arévalo</option><option value="admin">Administrador</option></select></div><div class="field"><label>PIN de acceso</label><div class="pin-row"><input class="pin-box" id="p0" type="password" maxlength="1" inputmode="numeric" oninput="pi(0)" onkeydown="pk(event,0)"><input class="pin-box" id="p1" type="password" maxlength="1" inputmode="numeric" oninput="pi(1)" onkeydown="pk(event,1)"><input class="pin-box" id="p2" type="password" maxlength="1" inputmode="numeric" oninput="pi(2)" onkeydown="pk(event,2)"><input class="pin-box" id="p3" type="password" maxlength="1" inputmode="numeric" oninput="pi(3)" onkeydown="pk(event,3)"></div></div><div class="err" id="er">'+(err||'')+'</div><button class="btn-login" onclick="doLogin()">Ingresar</button></div></div>';
+  document.getElementById('root').innerHTML='<div class="login-wrap"><div class="login-card"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem">Tomógrafo del Estado S.E.</div><div class="login-title">Portal de Turnos</div><div class="login-sub">Ingresá tu usuario y PIN para ver tus pacientes</div><div class="field"><label>Usuario</label><select id="usr"><option value="">Seleccioná tu nombre...</option><option value="medina">Dr. Gabriel Medina</option><option value="ortega">Dra. Cinthya Ortega</option><option value="arevalo_med">Dr. Carlos Arévalo</option><option value="admin">Administrador</option></select></div><div class="field"><label>PIN de acceso</label><div class="pin-row"><input class="pin-box" id="p0" type="password" maxlength="1" inputmode="numeric" oninput="pi(0)" onkeydown="pk(event,0)"><input class="pin-box" id="p1" type="password" maxlength="1" inputmode="numeric" oninput="pi(1)" onkeydown="pk(event,1)"><input class="pin-box" id="p2" type="password" maxlength="1" inputmode="numeric" oninput="pi(2)" onkeydown="pk(event,2)"><input class="pin-box" id="p3" type="password" maxlength="1" inputmode="numeric" oninput="pi(3)" onkeydown="pk(event,3)"></div></div><div class="err" id="er">'+(err||'')+'</div><button class="btn-login" onclick="doLogin()">Ingresar</button></div></div>';
 }
 function pi(i){var v=document.getElementById('p'+i).value;if(v&&i<3)document.getElementById('p'+(i+1)).focus();if(i===3)setTimeout(doLogin,80);}
 function pk(e,i){if(e.key==='Backspace'&&!document.getElementById('p'+i).value&&i>0)document.getElementById('p'+(i-1)).focus();}
@@ -416,7 +416,7 @@ function renderAdmin(tab){
   var regiones=MEDICOS.map(function(m){return pacientes.filter(function(p){return asignaciones[p.orden]===m.id && estadoMap[p.orden]!=='informado';}).reduce(function(acc,p){return acc+(p.codigos?p.codigos.length:0);},0);});
   var content='';
   if(tab==='estudios'){
-    content='<div class="card"><div class="card-header"><span class="card-title">Todos los estudios <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
+    content='<div class="card"><div class="card-header"><span class="card-title">Todos los pacientes <span class="badge b-sin">'+total+'</span></span><div style="display:flex;gap:8px;align-items:center"><input id="buscar-admin" type="text" placeholder="Buscar paciente..." oninput="filtrarAdmin()" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"><button class="btn btn-sm" onclick="reaplicar()">Redistribuir</button><button class="btn btn-sm btn-primary" onclick="renderAdmin(\'agregar\')">+ Agregar</button></div></div><div class="tbl-wrap"><table id=\"tabla-admin\"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Médico</th><th>Estado</th><th>Reasignar</th><th></th></tr></thead><tbody>';
     pacientes.forEach(function(p){
       if(estadoMap[p.orden]==='informado') return; // ocultar informados en vista admin
       content+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+ml(asignaciones[p.orden])+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td><select class="sel-inline" onchange="reasignar(\''+p.orden+'\',this.value)">'+MEDICOS.map(function(m){return'<option value="'+m.id+'"'+(asignaciones[p.orden]===m.id?' selected':'')+'>'+m.nombre.split(' ').pop()+'</option>';}).join('')+'</select></td><td><button class="btn btn-sm" onclick="abrirInformar(\''+p.orden+'\')">Abrir</button></td></tr>';
@@ -479,7 +479,7 @@ function renderAdmin(tab){
     var tbl='<div class="card"><div class="card-header"><span class="card-title">Liquidación mensual — '+(mesSel||'Sin período seleccionado')+'</span>'+selMes+'</div>'+panelConfig;
 
     if(!mesSel||mksDisp.length===0){
-      tbl+='<div style="padding:2rem;text-align:center;color:#999">Sin estudios informados aún.</div></div>';
+      tbl+='<div style="padding:2rem;text-align:center;color:#999">Sin pacientes informados aún.</div></div>';
     } else {
       // Filtrar estudios del mes seleccionado que estén informados
       var estudiosMes=todosLosPacientes.filter(function(p){
@@ -509,8 +509,8 @@ function renderAdmin(tab){
         tbl+='<div style="background:#f7f9fc;border:1px solid #e0e6f0;border-radius:8px;padding:12px">';
         tbl+='<div style="font-weight:700;color:#1a3a6e;font-size:13px;margin-bottom:8px">'+mn[med]+'</div>';
         tbl+='<div style="font-size:12px;color:#555;line-height:1.8">';
-        tbl+='TC: <b>'+(r.tc)+'</b> est · <b>'+r.tcR+'</b> reg · <span style="color:#1a7a4a">$'+(r.tcR*VAL_TC).toLocaleString('es-AR')+'</span><br>';
-        tbl+='RM: <b>'+(r.rm)+'</b> est · <b>'+r.rmR+'</b> reg · <span style="color:#7a4a1a">$'+(r.rmR*VAL_RM).toLocaleString('es-AR')+'</span><br>';
+        tbl+='TC: <b>'+(r.tc)+'</b> pac · <b>'+r.tcR+'</b> reg · <span style="color:#1a7a4a">$'+(r.tcR*VAL_TC).toLocaleString('es-AR')+'</span><br>';
+        tbl+='RM: <b>'+(r.rm)+'</b> pac · <b>'+r.rmR+'</b> reg · <span style="color:#7a4a1a">$'+(r.rmR*VAL_RM).toLocaleString('es-AR')+'</span><br>';
         tbl+='<b>Total: '+totalR+' reg</b> &nbsp;·&nbsp; <b style="color:#1a3a6e;font-size:14px">'+montoFmt+'</b>';
         tbl+='</div></div>';
       });
@@ -532,44 +532,69 @@ function renderAdmin(tab){
         tbl+='<span style="font-weight:700;font-size:13px">'+mn[med]+'</span>';
         tbl+='</div>';
         tbl+='<div style="display:flex;gap:16px;font-size:12px;opacity:.92">';
-        tbl+='<span>'+estudios.length+' estudios</span>';
+        tbl+='<span>'+estudios.length+' pacientes</span>';
         tbl+='<span><b>'+totalR+'</b> reg.</span>';
         tbl+='<span><b>$'+totalM.toLocaleString('es-AR')+'</b></span>';
         tbl+='</div></div>';
-        tbl+='<div id="'+secId+'" style="display:none">';
-        tbl+='<div style="overflow-x:auto;border:1px solid #e0e6f0;border-top:none;border-radius:0 0 7px 7px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
-        tbl+='<thead><tr style="background:#f0f4fa">';
-        tbl+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Orden</th>';
-        tbl+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Fecha</th>';
-        tbl+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Paciente</th>';
-        tbl+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Servicio</th>';
-        tbl+='<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ddd">Tipo</th>';
-        tbl+='<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ddd">Reg.</th>';
-        tbl+='<th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd">Monto</th>';
-        tbl+='</tr></thead><tbody>';
+        // Separar en TC y RM
         estudios.sort(function(a,b){
           var fa=a.fecha.split('/').reverse().join('');
           var fb=b.fecha.split('/').reverse().join('');
           return fa>fb?1:fa<fb?-1:0;
-        }).forEach(function(p){
-          var rm=esRM(p.servicio);
-          var regs=p.codigos?p.codigos.length:0;
-          var val=rm?VAL_RM:VAL_TC;
-          var monto=regs*val;
-          tbl+='<tr style="border-bottom:1px solid #f0f0f0">';
-          tbl+='<td style="padding:5px 8px;color:#666">'+p.orden+'</td>';
-          tbl+='<td style="padding:5px 8px">'+p.fecha+'</td>';
-          tbl+='<td style="padding:5px 8px;font-weight:500">'+p.nombre+'</td>';
-          tbl+='<td style="padding:5px 8px;color:#555">'+p.servicio+'</td>';
-          tbl+='<td style="padding:5px 8px;text-align:center"><span style="background:'+(rm?'#7a4a1a':col)+';color:#fff;padding:2px 7px;border-radius:10px;font-size:10px">'+(rm?'RM':'TC')+'</span></td>';
-          tbl+='<td style="padding:5px 8px;text-align:center;font-weight:600">'+regs+'</td>';
-          tbl+='<td style="padding:5px 8px;text-align:right;color:'+(rm?'#7a4a1a':'#1a7a4a')+'">${'+monto.toLocaleString('es-AR')+' }</td>';
-          tbl+='</tr>';
         });
-        tbl+='<tr style="background:#f7f9fc;font-weight:700"><td colspan="5" style="padding:7px 8px;text-align:right;border-top:2px solid #ddd">TOTAL</td>';
-        tbl+='<td style="padding:7px 8px;text-align:center;border-top:2px solid #ddd">'+totalR+'</td>';
-        tbl+='<td style="padding:7px 8px;text-align:right;border-top:2px solid #ddd;color:'+col+'">$'+totalM.toLocaleString('es-AR')+'</td></tr>';
-        tbl+='</tbody></table></div></div></div>';
+        var tcList=estudios.filter(function(p){return !esRM(p.servicio);});
+        var rmList=estudios.filter(function(p){return esRM(p.servicio);});
+        function secTabAdmin(lista,tipo,colorSec){
+          if(lista.length===0) return '';
+          var regsT=lista.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
+          var montoT=regsT*(tipo==='RM'?VAL_RM:VAL_TC);
+          var bgHead=tipo==='RM'?'#f5ece8':'#e8edf5';
+          var s='<div style="padding:6px 12px;background:'+colorSec+';color:#fff;font-size:11px;font-weight:700">';
+          s+=(tipo==='TC'?'TOMOGRAFÍA COMPUTADA (TC)':'RESONANCIA MAGNÉTICA (RM)')+' — '+lista.length+' pacientes</div>';
+          s+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+          s+='<thead><tr style="background:'+bgHead+'">';
+          s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Orden</th>';
+          s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Fecha</th>';
+          s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Paciente</th>';
+          s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Servicio</th>';
+          s+='<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ddd">Reg.</th>';
+          s+='<th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd">Monto</th>';
+          s+='</tr></thead><tbody>';
+          lista.forEach(function(p,i){
+            var regs=p.codigos?p.codigos.length:0;
+            var monto=regs*(tipo==='RM'?VAL_RM:VAL_TC);
+            s+='<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+';border-bottom:1px solid #f0f0f0">';
+            s+='<td style="padding:5px 8px;color:#666;font-size:11px">'+p.orden+'</td>';
+            s+='<td style="padding:5px 8px">'+p.fecha+'</td>';
+            s+='<td style="padding:5px 8px;font-weight:500">'+p.nombre+'</td>';
+            s+='<td style="padding:5px 8px;color:#555;font-size:11px">'+p.servicio+'</td>';
+            s+='<td style="padding:5px 8px;text-align:center;font-weight:700">'+regs+'</td>';
+            s+='<td style="padding:5px 8px;text-align:right;font-weight:600;color:'+colorSec+'">$'+monto.toLocaleString('es-AR')+'</td>';
+            s+='</tr>';
+          });
+          s+='<tr style="background:'+bgHead+';font-weight:700">';
+          s+='<td colspan="4" style="padding:7px 8px;text-align:right;border-top:2px solid '+colorSec+'">SUBTOTAL '+tipo+'</td>';
+          s+='<td style="padding:7px 8px;text-align:center;border-top:2px solid '+colorSec+'">'+regsT+'</td>';
+          s+='<td style="padding:7px 8px;text-align:right;border-top:2px solid '+colorSec+';color:'+colorSec+'">$'+montoT.toLocaleString('es-AR')+'</td>';
+          s+='</tr></tbody></table>';
+          return s;
+        }
+        tbl+='<div id="'+secId+'" style="display:none;border:1px solid #e0e6f0;border-top:none;border-radius:0 0 7px 7px;overflow:hidden">';
+        tbl+=secTabAdmin(tcList,'TC','#1a3a6e');
+        if(tcList.length>0&&rmList.length>0) tbl+='<div style="height:4px;background:#f0f4fa"></div>';
+        tbl+=secTabAdmin(rmList,'RM','#7a4a1a');
+        // Total general
+        tbl+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+        tbl+='<tr style="background:#1a1a4e;color:#fff;font-weight:700">';
+        tbl+='<td colspan="4" style="padding:9px 12px;font-size:13px">TOTAL GENERAL</td>';
+        if(tcList.length>0&&rmList.length>0){
+          tbl+='<td style="padding:9px 12px;text-align:center;font-size:11px">TC: '+r.tcR+' · RM: '+r.rmR+'<br><b>'+totalR+' reg</b></td>';
+        } else {
+          tbl+='<td style="padding:9px 12px;text-align:center;font-size:13px;font-weight:700">'+totalR+' reg</td>';
+        }
+        tbl+='<td style="padding:9px 12px;text-align:right;font-size:15px;font-weight:700">$'+totalM.toLocaleString('es-AR')+'</td>';
+        tbl+='</tr></table>';
+        tbl+='</div></div>';
       });
       tbl+='</div>';
     }
@@ -649,7 +674,7 @@ function renderAdmin(tab){
         if(tcEstudios.length>0){
           seccionesHTML+='<div style="margin-bottom:24px">'+
             '<div style="background:#1a3a6e;color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
-            'TOMOGRAFÍA COMPUTADA (TC) — '+tcEstudios.length+' estudios</div>'+
+            'TOMOGRAFÍA COMPUTADA (TC) — '+tcEstudios.length+' pacientes</div>'+
             '<table style="width:100%;border-collapse:collapse">'+
             '<thead><tr style="background:#e8edf5">'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e">Orden</th>'+
@@ -667,7 +692,7 @@ function renderAdmin(tab){
         if(rmEstudios.length>0){
           seccionesHTML+='<div style="margin-bottom:24px">'+
             '<div style="background:#7a3a1a;color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
-            'RESONANCIA MAGNÉTICA (RM) — '+rmEstudios.length+' estudios</div>'+
+            'RESONANCIA MAGNÉTICA (RM) — '+rmEstudios.length+' pacientes</div>'+
             '<table style="width:100%;border-collapse:collapse">'+
             '<thead><tr style="background:#f5ece8">'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Orden</th>'+
@@ -688,7 +713,7 @@ function renderAdmin(tab){
         var bgLight=medId==='ortega'?'#f3eef8':'#eef5f0';
         seccionesHTML+='<div style="margin-bottom:24px">'+
           '<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
-          'ESTUDIOS DEL PERÍODO — '+estudios.length+' en total</div>'+
+          'ESTUDIOS DEL PERÍODO — '+estudios.length+' pacientes</div>'+
           '<table style="width:100%;border-collapse:collapse">'+
           '<thead><tr style="background:'+bgLight+'">'+
           '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Orden</th>'+
@@ -743,7 +768,7 @@ function renderAdmin(tab){
         '<div>'+
         '<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Tomógrafo del Estado S.E.</div>'+
         '<h1>'+nombreMed+'</h1>'+
-        '<div class="org">Liquidación de estudios informados — Período: <b>'+mesSel+'</b></div>'+
+        '<div class="org">Liquidación de pacientes informados — Período: <b>'+mesSel+'</b></div>'+
         '<div class="org" style="margin-top:2px">Emitido: '+fechaEmision+'</div>'+
         '</div>'+
         '<div class="badge-total">'+
@@ -755,17 +780,17 @@ function renderAdmin(tab){
       if(medId==='medina'){
         html+='<div class="resumen">'+
           '<div class="res-card"><div class="label">TC — Tomografía</div>'+
-          '<div class="val">'+tcEstudios.length+' estudios · '+tcRegs+' reg</div>'+
+          '<div class="val">'+tcEstudios.length+' pacientes · '+tcRegs+' reg</div>'+
           '<div style="font-size:13px;color:#1a3a6e;margin-top:2px">$'+tcMonto.toLocaleString('es-AR')+'</div></div>'+
           '<div class="res-card"><div class="label">RM — Resonancia</div>'+
-          '<div class="val">'+rmEstudios.length+' estudios · '+rmRegs+' reg</div>'+
+          '<div class="val">'+rmEstudios.length+' pacientes · '+rmRegs+' reg</div>'+
           '<div style="font-size:13px;color:#7a3a1a;margin-top:2px">$'+rmMonto.toLocaleString('es-AR')+'</div></div>'+
           '<div class="res-card"><div class="label">Val. TC / RM por región</div>'+
           '<div class="val" style="font-size:13px">$'+VTC.toLocaleString('es-AR')+' / $'+VRM.toLocaleString('es-AR')+'</div></div>'+
           '</div>';
       } else {
         html+='<div class="resumen">'+
-          '<div class="res-card"><div class="label">Total estudios</div><div class="val">'+estudios.length+'</div></div>'+
+          '<div class="res-card"><div class="label">Total pacientes</div><div class="val">'+estudios.length+'</div></div>'+
           '<div class="res-card"><div class="label">Total regiones</div><div class="val">'+totalRegs+'</div></div>'+
           '<div class="res-card"><div class="label">Val. TC / RM por región</div>'+
           '<div class="val" style="font-size:13px">$'+VTC.toLocaleString('es-AR')+' / $'+VRM.toLocaleString('es-AR')+'</div></div>'+
@@ -973,7 +998,7 @@ function liquidacionMedico(medId){
   var h='<div class="card" style="margin-bottom:1rem"><div class="card-header"><span class="card-title">Mis códigos informados</span></div><div style="display:flex;gap:1rem;padding:1rem;flex-wrap:wrap">';
   mks.forEach(function(mk){
     var d=meses[mk];
-    h+='<div class="stat-card" style="flex:1;min-width:140px"><div class="stat-num" style="color:#1a7a4a">'+d.c+'</div><div class="stat-label">códigos en '+mk+'</div><div style="font-size:11px;color:#999;margin-top:4px">'+d.e+' estudios informados</div></div>';
+    h+='<div class="stat-card" style="flex:1;min-width:140px"><div class="stat-num" style="color:#1a7a4a">'+d.c+'</div><div class="stat-label">códigos en '+mk+'</div><div style="font-size:11px;color:#999;margin-top:4px">'+d.e+' pacientes informados</div></div>';
   });
   h+='</div></div>';
   return h;
@@ -1010,7 +1035,7 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
 
   var html='<div class="card" style="margin-top:1rem">';
   html+='<div class="card-header"><span class="card-title">📊 Mi Liquidación</span>';
-  html+='<span style="font-size:12px;color:#666">Estudiós informados por período</span></div>';
+  html+='<span style="font-size:12px;color:#666">Pacientes informados por período</span></div>';
   html+='<div style="padding:0.75rem 1rem">';
 
   meses.forEach(function(mk, idx){
@@ -1040,7 +1065,7 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
     html+='<span style="font-weight:700;font-size:13px">'+label+'</span>';
     html+='</div>';
     html+='<div style="display:flex;gap:16px;font-size:12px;opacity:.92">';
-    html+='<span>'+estudios.length+' estudios</span>';
+    html+='<span>'+estudios.length+' pacientes</span>';
     html+='<span><b>'+totalR+'</b> reg.</span>';
     html+='<span><b>$'+totalM.toLocaleString('es-AR')+'</b></span>';
     html+='<button onclick="event.stopPropagation();exportarMiLiqPDF(this.dataset.med,this.dataset.mes)" '+
@@ -1058,7 +1083,7 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
       var bgHead=tipo==='RM'?'#f5ece8':'#e8edf5';
       var s='<div style="padding:6px 12px;background:'+col+';color:#fff;font-size:11px;font-weight:700">'+
         (tipo==='TC'?'TOMOGRAFÍA COMPUTADA (TC)':'RESONANCIA MAGNÉTICA (RM)')+
-        ' — '+lista.length+' estudios</div>';
+        ' — '+lista.length+' pacientes</div>';
       s+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
       s+='<thead><tr style="background:'+bgHead+'">';
       s+='<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ddd">Orden</th>';
@@ -1122,7 +1147,7 @@ window.renderMiLiquidacion_page=function(){
   var med=MEDICOS[u.idx];
   var html=renderMiLiquidacion(med.id, window._pacientes||pacientes, window._estadoMap||estadoMap);
   if(!html){
-    html='<div class="card"><div style="padding:2rem;text-align:center;color:#999">Sin estudios informados aún.</div></div>';
+    html='<div class="card"><div style="padding:2rem;text-align:center;color:#999">Sin pacientes informados aún.</div></div>';
   }
   document.getElementById('root').innerHTML=
     topbar(med.nombre,med.ini,med.av)+
@@ -1191,7 +1216,7 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     var regs=lista.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
     var monto=regs*(tipo==='RM'?VRM:VTC);
     return '<div style="margin-bottom:22px">'
-      +'<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+label+' — '+lista.length+' estudios</div>'
+      +'<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+label+' — '+lista.length+' pacientes</div>'
       +'<table style="width:100%;border-collapse:collapse">'
       +'<thead><tr style="background:'+(tipo==='RM'?'#f5ece8':'#e8edf5')+'">'
       +'<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Orden</th>'
@@ -1267,8 +1292,8 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     +'<div class="badge-total"><span class="small">TOTAL A LIQUIDAR</span><span class="big">$'+totalMonto.toLocaleString('es-AR')+'</span><span class="small">'+totalRegs+' regiones</span></div>'
     +'</div>'
     +'<div class="resumen">'
-    +(tcR>0?'<div class="res-card"><div class="label">TC</div><div class="val">'+tcE.length+' est · '+tcR+' reg</div><div style="color:#1a3a6e;font-size:13px">$'+(tcR*VTC).toLocaleString('es-AR')+'</div></div>':'')
-    +(rmR>0?'<div class="res-card"><div class="label">RM</div><div class="val">'+rmE.length+' est · '+rmR+' reg</div><div style="color:#7a4a1a;font-size:13px">$'+(rmR*VRM).toLocaleString('es-AR')+'</div></div>':'')
+    +(tcR>0?'<div class="res-card"><div class="label">TC</div><div class="val">'+tcE.length+' pac · '+tcR+' reg</div><div style="color:#1a3a6e;font-size:13px">$'+(tcR*VTC).toLocaleString('es-AR')+'</div></div>':'')
+    +(rmR>0?'<div class="res-card"><div class="label">RM</div><div class="val">'+rmE.length+' pac · '+rmR+' reg</div><div style="color:#7a4a1a;font-size:13px">$'+(rmR*VRM).toLocaleString('es-AR')+'</div></div>':'')
     +'<div class="res-card"><div class="label">Val. TC / RM por reg.</div><div class="val" style="font-size:13px">$'+VTC.toLocaleString('es-AR')+' / $'+VRM.toLocaleString('es-AR')+'</div></div>'
     +'</div>'
     +secciones
@@ -1315,7 +1340,7 @@ function _renderMedicoInner(u, med){
   informados.forEach(function(p){
     rowsInf+='<tr><td style="color:#666">'+p.fecha+'</td><td><b>'+p.nombre+'</b></td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-ok">'+(p.codigos?p.codigos.length:0)+'</span></td></tr>';
   });
-  var tablaInf=informados.length===0?'':'<div class="card" style="margin-top:1rem"><div class="card-header"><span class="card-title">Mis estudios informados</span><span style="font-size:12px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalRegInf+'</span><input id="buscar-inf" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div><div class="tbl-wrap"><table id="tabla-inf"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rowsInf+'</tbody></table></div></div>';
+  var tablaInf=informados.length===0?'':'<div class="card" style="margin-top:1rem"><div class="card-header"><span class="card-title">Mis pacientes informados</span><span style="font-size:12px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalRegInf+'</span><input id="buscar-inf" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div><div class="tbl-wrap"><table id="tabla-inf"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rowsInf+'</tbody></table></div></div>';
     var infCount=informados.length;
   var infReg=totalRegInf;
   var pendReg=mis.filter(function(p){return p.estado!=='informado';}).reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
@@ -1343,7 +1368,7 @@ document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
   '<div style="position:relative">'+
   (btnInf?'<div style="position:absolute;left:-200px;top:0;width:185px">'+btnInf+'</div>':'')+
-  headerAsignados+(mis.length===0?'<div class="empty">No tenés estudios asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+
+  headerAsignados+(mis.length===0?'<div class="empty">No tenés pacientes asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+
   '</div></div></div>';
 }
 
@@ -1372,7 +1397,7 @@ function renderInformados(filtroMes){
   '<div class="main">'+syncBanner()+
   '<div class="card"><div class="card-header" style="display:flex;align-items:center;gap:12px">'+
   '<button onclick="renderMedico()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#666" title="Volver">&#8592;</button>'+
-  '<span class="card-title">Mis estudios informados</span>'+
+  '<span class="card-title">Mis pacientes informados</span>'+
   (function(){
     // Construir opciones de mes
     var mesesMap={};
@@ -1390,7 +1415,7 @@ function renderInformados(filtroMes){
   '<span style="font-size:13px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalReg+'</span>'+
   '<input id="buscar-inf2" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px;margin-left:auto">'+
   '</div>'+
-  (informados.length===0?'<div class="empty">No hay estudios informados aún.</div>':'<div class="tbl-wrap"><table id="tabla-inf2"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+
+  (informados.length===0?'<div class="empty">No hay pacientes informados aún.</div>':'<div class="tbl-wrap"><table id="tabla-inf2"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+
   '</div></div>';
 }
 
