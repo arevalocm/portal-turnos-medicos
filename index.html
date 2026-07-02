@@ -330,23 +330,31 @@ async function savePacientesExtra(){
 async function saveInformadoEnFirebase(p){
   if(!p) return;
   try {
+    var now = new Date();
+    var tsISO = now.toISOString();
+    var tsFmt = now.getDate()+'/'+(now.getMonth()+1)+'/'+String(now.getFullYear()).slice(2)+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    // Actualizar en memoria (_pacientes) inmediatamente
+    if(window._pacientes){
+      var pInMem = window._pacientes.find(function(x){return x.orden===p.orden;});
+      if(pInMem && !pInMem.fechaInformadoISO){ pInMem.fechaInformado=tsFmt; pInMem.fechaInformadoISO=tsISO; }
+    }
+    // Actualizar en pacientes local también
+    var pLocal = pacientes.find(function(x){return x.orden===p.orden;});
+    if(pLocal && !pLocal.fechaInformadoISO){ pLocal.fechaInformado=tsFmt; pLocal.fechaInformadoISO=tsISO; }
+    // Guardar en Firebase
     const snap = await getDoc(DOC_PACS);
     var lista = [];
     if(snap.exists() && snap.data().lista && Array.isArray(snap.data().lista)){
       lista = snap.data().lista;
     }
     var yaEstaIdx = lista.findIndex(function(x){return x.orden===p.orden;});
-    var now = new Date();
-    var tsISO = now.toISOString();
-    var tsFmt = now.getDate()+'/'+(now.getMonth()+1)+'/'+String(now.getFullYear()).slice(2)+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
     if(yaEstaIdx===-1){
       lista.push({orden:p.orden, fecha:p.fecha, nombre:p.nombre, servicio:p.servicio, atencion:p.atencion||'', codigos:p.codigos||[], fechaInformado:tsFmt, fechaInformadoISO:tsISO});
-      await setDoc(DOC_PACS, {lista: lista});
-    } else if(!lista[yaEstaIdx].fechaInformadoISO){
+    } else {
       lista[yaEstaIdx].fechaInformado = tsFmt;
       lista[yaEstaIdx].fechaInformadoISO = tsISO;
-      await setDoc(DOC_PACS, {lista: lista});
     }
+    await setDoc(DOC_PACS, {lista: lista});
   } catch(e){ console.error('Error guardando informado',e); }
 }
 
