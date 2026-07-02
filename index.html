@@ -678,6 +678,11 @@ function renderAdmin(tab){
         return (parts[1]+'/20'+parts[2])===mesSel;
       });
       estudios.sort(function(a,b){
+        if(window._liqOrden==='informado'){
+          var fa=a.fechaInformadoISO||'';
+          var fb=b.fechaInformadoISO||'';
+          if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
+        }
         var fa=a.fecha.split('/').reverse().join(''),fb=b.fecha.split('/').reverse().join('');
         return fa>fb?1:fa<fb?-1:0;
       });
@@ -861,6 +866,11 @@ function renderAdmin(tab){
         return (parts[1]+'/20'+parts[2])===mesSel;
       });
       estudiosMedico.sort(function(a,b){
+        if(window._liqOrden==='informado'){
+          var fa=a.fechaInformadoISO||'';
+          var fb=b.fechaInformadoISO||'';
+          if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
+        }
         var fa=a.fecha.split('/').reverse().join(''),fb=b.fecha.split('/').reverse().join('');
         return fa>fb?1:fa<fb?-1:0;
       });
@@ -1297,6 +1307,11 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     return (parts[1]+'/20'+parts[2])===mesSel;
   });
   estudios.sort(function(a,b){
+    if(window._miliqOrden==='informado'){
+      var fa=a.fechaInformadoISO||'';
+      var fb=b.fechaInformadoISO||'';
+      if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
+    }
     var fa=a.fecha.split('/').reverse().join(''),fb=b.fecha.split('/').reverse().join('');
     return fa>fb?1:fa<fb?-1:0;
   });
