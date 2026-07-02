@@ -1605,8 +1605,10 @@ function abrirInformar(orden){
       document.body.appendChild(overlay);
       document.getElementById('btn-si').onclick=async function(){
         document.body.removeChild(overlay);
+        console.log('[btn-si] clicked orden:'+orden);
         // Guardar referencia ANTES de modificar
         var pp=pacientes.filter(function(x){return x.orden===orden;})[0];
+        console.log('[btn-si] pp encontrado:'+(pp?pp.nombre:'NO ENCONTRADO'));
         // Actualizar estado en lugar de eliminar
         if(pp) pp.estado='informado';
         estadoMap[orden]='informado';
