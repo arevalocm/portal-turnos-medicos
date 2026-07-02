@@ -1421,7 +1421,7 @@ function _renderMedicoInner(u, med){
     return fa>fb?1:fa<fb?-1:0;
   }).forEach(function(p){
     if(p.estado==='informado') return;
-    rows+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td style="display:flex;gap:6px;align-items:center">'+(p.estado!=='informado'?'<button class="btn-informar" onclick="abrirInformar(\''+p.orden+'\')">+ Informar</button>':'<span style="font-size:12px;color:#1a7a4a">Completado</span>')+'</td></tr>';
+    rows+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td style="font-size:11px;color:'+(p.fechaLlegada&&p.fechaLlegada!==p.fecha?'#e07020':'#888')+'">'+( p.fechaLlegada||'—')+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td style="display:flex;gap:6px;align-items:center">'+(p.estado!=='informado'?'<button class="btn-informar" onclick="abrirInformar(\''+p.orden+'\')">+ Informar</button>':'<span style="font-size:12px;color:#1a7a4a">Completado</span>')+'</td></tr>';
   });
   // Tabla informados — ordenada por fecha descendente (más reciente primero)
   var informados=mis.filter(function(p){return p.estado==='informado';});
@@ -1463,7 +1463,7 @@ document.getElementById('root').innerHTML=topbar(med.nombre,med.ini,med.av)+
   '<div class="main">'+syncBanner()+'<div class="banner">Hacé clic en <b>+ Informar</b> para abrir el estudio. Al cerrar la ventana del RIS se te preguntará si ya lo informaste.</div>'+
   '<div style="position:relative">'+
   (btnInf?'<div style="position:absolute;left:-200px;top:0;width:185px">'+btnInf+'</div>':'')+
-  headerAsignados+(mis.length===0?'<div class="empty">No tenés pacientes asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+
+  headerAsignados+(mis.length===0?'<div class="empty">No tenés pacientes asignados.<br>Consultá con el administrador.</div>':'<div class="tbl-wrap"><table id="tabla-med"><thead><tr><th>Orden</th><th>Fecha estudio</th><th>Llegada</th><th>Paciente</th><th>Servicio</th><th>Reg.</th><th>Atención</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+'</div>'+
   '</div></div></div>';
 }
 
