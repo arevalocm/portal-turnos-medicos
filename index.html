@@ -280,7 +280,20 @@ async function loadFromFirebase(){
     } catch(e){ extra = []; }
     pacientes = PACS_DEFAULT.slice();
     var ordenes = new Set(pacientes.map(p=>p.orden));
-    extra.forEach(function(p){ if(p && p.orden && !ordenes.has(p.orden)) pacientes.push(p); });
+    extra.forEach(function(p){
+      if(!p || !p.orden) return;
+      if(!ordenes.has(p.orden)){
+        pacientes.push(p);
+      } else if(p.fechaInformadoISO || p.fechaInformado || p.fechaLlegada) {
+        // Mergear campos extra sobre el paciente existente
+        var existing = pacientes.find(function(x){return x.orden===p.orden;});
+        if(existing){
+          if(p.fechaInformadoISO) existing.fechaInformadoISO = p.fechaInformadoISO;
+          if(p.fechaInformado) existing.fechaInformado = p.fechaInformado;
+          if(p.fechaLlegada && !existing.fechaLlegada) existing.fechaLlegada = p.fechaLlegada;
+        }
+      }
+    });
   } catch(e){ pacientes = PACS_DEFAULT.slice(); }
 
   // Cargar config de liquidación
