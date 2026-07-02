@@ -337,7 +337,10 @@ async function saveInformadoEnFirebase(p){
     }
     var yaEsta = lista.find(function(x){return x.orden===p.orden;});
     if(!yaEsta){
-      lista.push({orden:p.orden, fecha:p.fecha, nombre:p.nombre, servicio:p.servicio, atencion:p.atencion||'', codigos:p.codigos||[]});
+      var now = new Date();
+      var tsISO = now.toISOString();
+      var tsFmt = now.getDate()+'/'+(now.getMonth()+1)+'/'+String(now.getFullYear()).slice(2)+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      lista.push({orden:p.orden, fecha:p.fecha, nombre:p.nombre, servicio:p.servicio, atencion:p.atencion||'', codigos:p.codigos||[], fechaInformado:tsFmt, fechaInformadoISO:tsISO});
       await setDoc(DOC_PACS, {lista: lista});
     }
   } catch(e){ console.error('Error guardando informado',e); }
@@ -489,6 +492,10 @@ function renderAdmin(tab){
     selMes+='<button onclick="exportarLiqPDF(\'ortega\')" class="btn btn-sm" style="background:#4a1a7a;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">📄 PDF Ortega</button>';
     selMes+='<button onclick="exportarLiqPDF(\'arevalo\')" class="btn btn-sm" style="background:#1a7a4a;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">📄 PDF Arévalo</button>';
     selMes+='<button onclick="toggleConfigLiq()" class="btn btn-sm" style="background:#888;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px" title="Editar valores por región">⚙ Valores</button>';
+    selMes+='<select id="sel-orden-liq" onchange="window._liqOrden=this.value;renderAdmin(\'liquidacion\')" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:12px">';
+    selMes+='<option value="fecha"'+(window._liqOrden==='informado'?'':' selected')+'>Por fecha estudio</option>';
+    selMes+='<option value="informado"'+(window._liqOrden==='informado'?' selected':'')+'>Por fecha de informe</option>';
+    selMes+='</select>';
     selMes+='</div>';
 
     // Panel de configuración de valores (toggle)
@@ -565,6 +572,11 @@ function renderAdmin(tab){
         tbl+='</div></div>';
         // Separar en TC y RM
         estudios.sort(function(a,b){
+          if(window._liqOrden==='informado'){
+            var fa=a.fechaInformadoISO||'';
+            var fb=b.fechaInformadoISO||'';
+            if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
+          }
           var fa=a.fecha.split('/').reverse().join('');
           var fb=b.fecha.split('/').reverse().join('');
           return fa>fb?1:fa<fb?-1:0;
@@ -1113,7 +1125,12 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
 
   var html='<div class="card" style="margin-top:1rem">';
   html+='<div class="card-header"><span class="card-title">📊 Mi Liquidación</span>';
-  html+='<span style="font-size:12px;color:#666">Pacientes informados por período</span></div>';
+  html+='<div style="display:flex;align-items:center;gap:10px">';
+  html+='<span style="font-size:12px;color:#666">Pacientes informados por período</span>';
+  html+='<select onchange="window._miliqOrden=this.value;renderMiLiquidacion_page()" style="padding:4px 8px;border:1px solid #ddd;border-radius:5px;font-size:11px">';
+  html+='<option value="fecha"'+(window._miliqOrden==='informado'?'':' selected')+'>Por fecha estudio</option>';
+  html+='<option value="informado"'+(window._miliqOrden==='informado'?' selected':'')+'>Por fecha de informe</option>';
+  html+='</select></div></div>';
   html+='<div style="padding:0.75rem 1rem">';
 
   meses.forEach(function(mk, idx){
@@ -1123,6 +1140,11 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
     var label=mesesNombres[mm]+' '+yyyy;
     var secId='miliq-'+medId+'-'+mk.replace('/','');
     estudios.sort(function(a,b){
+      if(window._miliqOrden==='informado'){
+        var fa=a.fechaInformadoISO||'';
+        var fb=b.fechaInformadoISO||'';
+        if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
+      }
       var fa=a.fecha.split('/').reverse().join('');
       var fb=b.fecha.split('/').reverse().join('');
       return fa>fb?1:fa<fb?-1:0;
