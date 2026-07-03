@@ -610,6 +610,8 @@ function renderAdmin(tab){
           if(window._liqOrden==='informado'){
             var fa=a.fechaInformadoISO||'';
             var fb=b.fechaInformadoISO||'';
+            if(fa&&!fb) return 1;   // a tiene ISO, b no → a va después
+            if(!fa&&fb) return -1;  // b tiene ISO, a no → b va después
             if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
           }
           var fa=a.fecha.split('/').reverse().join('');
@@ -716,6 +718,8 @@ function renderAdmin(tab){
         if(window._liqOrden==='informado'){
           var fa=a.fechaInformadoISO||'';
           var fb=b.fechaInformadoISO||'';
+          if(fa&&!fb) return 1;
+          if(!fa&&fb) return -1;
           if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
         }
         var fa=a.fecha.split('/').reverse().join(''),fb=b.fecha.split('/').reverse().join('');
@@ -904,6 +908,8 @@ function renderAdmin(tab){
         if(window._liqOrden==='informado'){
           var fa=a.fechaInformadoISO||'';
           var fb=b.fechaInformadoISO||'';
+          if(fa&&!fb) return 1;
+          if(!fa&&fb) return -1;
           if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
         }
         var fa=a.fecha.split('/').reverse().join(''),fb=b.fecha.split('/').reverse().join('');
@@ -1188,6 +1194,8 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
       if(window._miliqOrden==='informado'){
         var fa=a.fechaInformadoISO||'';
         var fb=b.fechaInformadoISO||'';
+        if(fa&&!fb) return 1;
+        if(!fa&&fb) return -1;
         if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
       }
       var fa=a.fecha.split('/').reverse().join('');
@@ -1345,6 +1353,8 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     if(window._miliqOrden==='informado'){
       var fa=a.fechaInformadoISO||'';
       var fb=b.fechaInformadoISO||'';
+      if(fa&&!fb) return 1;
+      if(!fa&&fb) return -1;
       if(fa&&fb) return fa>fb?1:fa<fb?-1:0;
     }
     var fa=a.fecha.split('/').reverse().join(''),fb=b.fecha.split('/').reverse().join('');
