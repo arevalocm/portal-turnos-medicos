@@ -735,12 +735,14 @@ function renderAdmin(tab){
       var tcMonto=tcRegs*VTC, rmMonto=rmRegs*VRM;
       var totalRegs=tcRegs+rmRegs, totalMonto=tcMonto+rmMonto;
       // Generar filas de tabla
-      function filasPDF(lista, tipo){
+      function filasPDF(lista, tipo, offset){
+        offset=offset||0;
         return lista.map(function(p,i){
           var regs=p.codigos?p.codigos.length:0;
           var monto=regs*(tipo==='RM'?VRM:VTC);
           var bg=i%2===0?'#ffffff':'#f8f9fc';
-          return '<tr style="background:'+bg+'">'+
+          return '<tr style="background:'+bg+';page-break-inside:avoid">'+
+            '<td style="padding:6px 6px;border-bottom:1px solid #e8e8e8;text-align:center;color:#999;font-size:11px;width:28px">'+(offset+i+1)+'</td>'+
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;color:#555;font-size:11px">'+p.orden+'</td>'+
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;font-size:12px">'+p.fecha+'</td>'+
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;font-weight:600;font-size:12px">'+p.nombre+'</td>'+
@@ -757,17 +759,18 @@ function renderAdmin(tab){
         if(tcEstudios.length>0){
           seccionesHTML+='<div style="margin-bottom:24px">'+
             '<div style="background:#1a3a6e;color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
-            'TOMOGRAFÍA COMPUTADA (TC) — '+tcEstudios.length+' pacientes</div>'+
+            'TOMOGRAFÍA COMPUTADA (TC) — '+tcEstudios.length+' pacientes · '+tcRegs+' regiones</div>'+
             '<table style="width:100%;border-collapse:collapse">'+
             '<thead><tr style="background:#e8edf5">'+
+            '<th style="padding:7px 6px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e;width:28px">#</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e">Orden</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e">Fecha</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e">Paciente</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e">Servicio</th>'+
             '<th style="padding:7px 10px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e">Reg.</th>'+
             '<th style="padding:7px 10px;text-align:right;font-size:11px;color:#444;border-bottom:2px solid #1a3a6e">Monto</th>'+
-            '</tr></thead><tbody>'+filasPDF(tcEstudios,'TC')+
-            '<tr style="background:#e8edf5"><td colspan="4" style="padding:8px 10px;font-weight:700;font-size:12px">SUBTOTAL TC</td>'+
+            '</tr></thead><tbody>'+filasPDF(tcEstudios,'TC',0)+
+            '<tr style="background:#e8edf5"><td colspan="5" style="padding:8px 10px;font-weight:700;font-size:12px">SUBTOTAL TC</td>'+
             '<td style="padding:8px 10px;text-align:center;font-weight:700;font-size:13px">'+tcRegs+'</td>'+
             '<td style="padding:8px 10px;text-align:right;font-weight:700;font-size:13px;color:#1a3a6e">$'+tcMonto.toLocaleString('es-AR')+'</td></tr>'+
             '</tbody></table></div>';
@@ -775,56 +778,64 @@ function renderAdmin(tab){
         if(rmEstudios.length>0){
           seccionesHTML+='<div style="margin-bottom:24px">'+
             '<div style="background:#7a3a1a;color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
-            'RESONANCIA MAGNÉTICA (RM) — '+rmEstudios.length+' pacientes</div>'+
+            'RESONANCIA MAGNÉTICA (RM) — '+rmEstudios.length+' pacientes · '+rmRegs+' regiones</div>'+
             '<table style="width:100%;border-collapse:collapse">'+
             '<thead><tr style="background:#f5ece8">'+
+            '<th style="padding:7px 6px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a;width:28px">#</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Orden</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Fecha</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Paciente</th>'+
             '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Servicio</th>'+
             '<th style="padding:7px 10px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Reg.</th>'+
             '<th style="padding:7px 10px;text-align:right;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Monto</th>'+
-            '</tr></thead><tbody>'+filasPDF(rmEstudios,'RM')+
-            '<tr style="background:#f5ece8"><td colspan="4" style="padding:8px 10px;font-weight:700;font-size:12px">SUBTOTAL RM</td>'+
+            '</tr></thead><tbody>'+filasPDF(rmEstudios,'RM',0)+
+            '<tr style="background:#f5ece8"><td colspan="5" style="padding:8px 10px;font-weight:700;font-size:12px">SUBTOTAL RM</td>'+
             '<td style="padding:8px 10px;text-align:center;font-weight:700;font-size:13px">'+rmRegs+'</td>'+
             '<td style="padding:8px 10px;text-align:right;font-weight:700;font-size:13px;color:#7a3a1a">$'+rmMonto.toLocaleString('es-AR')+'</td></tr>'+
             '</tbody></table></div>';
         }
       } else {
-        // Ortega y Arévalo: lista única TC+RM
+        // Ortega y Arévalo: TC y RM separadas igual que Medina
         var color=medId==='ortega'?'#4a1a7a':'#1a7a4a';
         var bgLight=medId==='ortega'?'#f3eef8':'#eef5f0';
-        seccionesHTML+='<div style="margin-bottom:24px">'+
-          '<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
-          'ESTUDIOS DEL PERÍODO — '+estudios.length+' pacientes</div>'+
-          '<table style="width:100%;border-collapse:collapse">'+
-          '<thead><tr style="background:'+bgLight+'">'+
-          '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Orden</th>'+
-          '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Fecha</th>'+
-          '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Paciente</th>'+
-          '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Servicio</th>'+
-          '<th style="padding:7px 10px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Reg.</th>'+
-          '<th style="padding:7px 10px;text-align:right;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Monto</th>'+
-          '</tr></thead><tbody>'+
-          estudios.map(function(p,i){
-            var rm=esRMp(p.servicio);
-            var regs=p.codigos?p.codigos.length:0;
-            var monto=regs*(rm?VRM:VTC);
-            var bg=i%2===0?'#ffffff':'#f8f9fc';
-            return '<tr style="background:'+bg+'">'+
-              '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;color:#555;font-size:11px">'+p.orden+'</td>'+
-              '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;font-size:12px">'+p.fecha+'</td>'+
-              '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;font-weight:600;font-size:12px">'+p.nombre+'</td>'+
-              '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;font-size:11px;color:#666">'+
-                p.servicio+' <span style="background:'+(rm?'#7a3a1a':color)+';color:#fff;padding:1px 5px;border-radius:8px;font-size:9px;margin-left:3px">'+(rm?'RM':'TC')+'</span></td>'+
-              '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;text-align:center;font-weight:700;font-size:13px">'+regs+'</td>'+
-              '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;text-align:right;font-weight:600;font-size:12px;color:'+color+'">$'+monto.toLocaleString('es-AR')+'</td>'+
-              '</tr>';
-          }).join('')+
-          '<tr style="background:'+bgLight+'"><td colspan="4" style="padding:8px 10px;font-weight:700;font-size:12px">TOTAL</td>'+
-          '<td style="padding:8px 10px;text-align:center;font-weight:700;font-size:13px">'+totalRegs+'</td>'+
-          '<td style="padding:8px 10px;text-align:right;font-weight:700;font-size:13px;color:'+color+'">$'+totalMonto.toLocaleString('es-AR')+'</td></tr>'+
-          '</tbody></table></div>';
+        if(tcEstudios.length>0){
+          seccionesHTML+='<div style="margin-bottom:24px">'+
+            '<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
+            'TOMOGRAFÍA COMPUTADA (TC) — '+tcEstudios.length+' pacientes · '+tcRegs+' regiones</div>'+
+            '<table style="width:100%;border-collapse:collapse">'+
+            '<thead><tr style="background:'+bgLight+'">'+
+            '<th style="padding:7px 6px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid '+color+';width:28px">#</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Orden</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Fecha</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Paciente</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Servicio</th>'+
+            '<th style="padding:7px 10px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Reg.</th>'+
+            '<th style="padding:7px 10px;text-align:right;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Monto</th>'+
+            '</tr></thead><tbody>'+filasPDF(tcEstudios,'TC',0)+
+            '<tr style="background:'+bgLight+'"><td colspan="5" style="padding:8px 10px;font-weight:700;font-size:12px">SUBTOTAL TC</td>'+
+            '<td style="padding:8px 10px;text-align:center;font-weight:700;font-size:13px">'+tcRegs+'</td>'+
+            '<td style="padding:8px 10px;text-align:right;font-weight:700;font-size:13px;color:'+color+'">$'+tcMonto.toLocaleString('es-AR')+'</td></tr>'+
+            '</tbody></table></div>';
+        }
+        if(rmEstudios.length>0){
+          seccionesHTML+='<div style="margin-bottom:24px">'+
+            '<div style="background:#7a3a1a;color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
+            'RESONANCIA MAGNÉTICA (RM) — '+rmEstudios.length+' pacientes · '+rmRegs+' regiones</div>'+
+            '<table style="width:100%;border-collapse:collapse">'+
+            '<thead><tr style="background:#f5ece8">'+
+            '<th style="padding:7px 6px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a;width:28px">#</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Orden</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Fecha</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Paciente</th>'+
+            '<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Servicio</th>'+
+            '<th style="padding:7px 10px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Reg.</th>'+
+            '<th style="padding:7px 10px;text-align:right;font-size:11px;color:#444;border-bottom:2px solid #7a3a1a">Monto</th>'+
+            '</tr></thead><tbody>'+filasPDF(rmEstudios,'RM',0)+
+            '<tr style="background:#f5ece8"><td colspan="5" style="padding:8px 10px;font-weight:700;font-size:12px">SUBTOTAL RM</td>'+
+            '<td style="padding:8px 10px;text-align:center;font-weight:700;font-size:13px">'+rmRegs+'</td>'+
+            '<td style="padding:8px 10px;text-align:right;font-weight:700;font-size:13px;color:#7a3a1a">$'+rmMonto.toLocaleString('es-AR')+'</td></tr>'+
+            '</tbody></table></div>';
+        }
       }
       // Fecha actual
       var hoy=new Date();
@@ -979,7 +990,9 @@ async function reasignar(orden,medId){
   if(!medId)return;
   asignaciones[orden]=medId;
   overrides[orden]=medId;
+  var scrollPos=window.scrollY||document.documentElement.scrollTop;
   renderAdmin('estudios');
+  requestAnimationFrame(function(){ window.scrollTo(0,scrollPos); });
   await saveAsignaciones();
   await saveOverrides();
 }
@@ -1373,7 +1386,8 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     return lista.map(function(p,i){
       var regs=p.codigos?p.codigos.length:0;
       var monto=regs*(tipo==='RM'?VRM:VTC);
-      return '<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+'">'
+      return '<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+';page-break-inside:avoid">'
+        +'<td style="padding:6px 6px;text-align:center;color:#999;font-size:11px;width:28px">'+(i+1)+'</td>'
         +'<td style="padding:6px 10px;color:#555;font-size:11px">'+p.orden+'</td>'
         +'<td style="padding:6px 10px;font-size:12px">'+p.fecha+'</td>'
         +'<td style="padding:6px 10px;font-weight:600;font-size:12px">'+p.nombre+'</td>'
@@ -1388,10 +1402,12 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     if(lista.length===0) return '';
     var regs=lista.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
     var monto=regs*(tipo==='RM'?VRM:VTC);
+    var bgH=tipo==='RM'?'#f5ece8':'#e8edf5';
     return '<div style="margin-bottom:22px">'
-      +'<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+label+' — '+lista.length+' pacientes</div>'
+      +'<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+label+' — '+lista.length+' pacientes · '+regs+' regiones</div>'
       +'<table style="width:100%;border-collapse:collapse">'
-      +'<thead><tr style="background:'+(tipo==='RM'?'#f5ece8':'#e8edf5')+'">'
+      +'<thead><tr style="background:'+bgH+'">'
+      +'<th style="padding:7px 6px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid '+color+';width:28px">#</th>'
       +'<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Orden</th>'
       +'<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Fecha</th>'
       +'<th style="padding:7px 10px;text-align:left;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Paciente</th>'
@@ -1400,53 +1416,18 @@ window.exportarMiLiqPDF=function(medId, mesSel){
       +'<th style="padding:7px 10px;text-align:right;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Monto</th>'
       +'</tr></thead><tbody>'
       +filasHTML(lista,tipo)
-      +'<tr style="background:'+(tipo==='RM'?'#f5ece8':'#e8edf5')+';font-weight:700">'
-      +'<td colspan="4" style="padding:7px 10px;border-top:2px solid '+color+'">SUBTOTAL '+tipo+'</td>'
+      +'<tr style="background:'+bgH+';font-weight:700">'
+      +'<td colspan="5" style="padding:7px 10px;border-top:2px solid '+color+'">SUBTOTAL '+tipo+'</td>'
       +'<td style="padding:7px 10px;text-align:center;border-top:2px solid '+color+'">'+regs+'</td>'
       +'<td style="padding:7px 10px;text-align:right;border-top:2px solid '+color+';color:'+color+'">$'+monto.toLocaleString('es-AR')+'</td>'
       +'</tr></tbody></table></div>';
   }
 
   var secciones='';
-  if(medId==='medina'){
-    secciones+=seccionHTML(tcE,'TC','TOMOGRAFÍA COMPUTADA (TC)','#1a3a6e');
-    secciones+=seccionHTML(rmE,'RM','RESONANCIA MAGNÉTICA (RM)','#7a4a1a');
-  } else {
-    // Lista única con badge tipo
-    var col2=medId==='ortega'?'#4a1a7a':'#1a7a4a';
-    secciones+='<div style="margin-bottom:22px">'
-      +'<div style="background:'+col2+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">ESTUDIOS DEL PERÍODO — '+estudios.length+' en total</div>'
-      +'<table style="width:100%;border-collapse:collapse">'
-      +'<thead><tr style="background:#f3f0f8">'
-      +'<th style="padding:7px 10px;text-align:left;font-size:11px;border-bottom:2px solid '+col2+'">Orden</th>'
-      +'<th style="padding:7px 10px;text-align:left;font-size:11px;border-bottom:2px solid '+col2+'">Fecha</th>'
-      +'<th style="padding:7px 10px;text-align:left;font-size:11px;border-bottom:2px solid '+col2+'">Paciente</th>'
-      +'<th style="padding:7px 10px;text-align:left;font-size:11px;border-bottom:2px solid '+col2+'">Servicio</th>'
-      +'<th style="padding:7px 10px;text-align:center;font-size:11px;border-bottom:2px solid '+col2+'">Tipo</th>'
-      +'<th style="padding:7px 10px;text-align:center;font-size:11px;border-bottom:2px solid '+col2+'">Reg.</th>'
-      +'<th style="padding:7px 10px;text-align:right;font-size:11px;border-bottom:2px solid '+col2+'">Monto</th>'
-      +'</tr></thead><tbody>'
-      +estudios.map(function(p,i){
-        var rm=esRMx(p.servicio);
-        var regs=p.codigos?p.codigos.length:0;
-        var monto=regs*(rm?VRM:VTC);
-        return '<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+'">'
-          +'<td style="padding:6px 10px;color:#555;font-size:11px">'+p.orden+'</td>'
-          +'<td style="padding:6px 10px;font-size:12px">'+p.fecha+'</td>'
-          +'<td style="padding:6px 10px;font-weight:600;font-size:12px">'+p.nombre+'</td>'
-          +'<td style="padding:6px 10px;color:#666;font-size:11px">'+p.servicio
-            +' <span style="background:'+(rm?'#7a4a1a':col2)+';color:#fff;padding:1px 5px;border-radius:8px;font-size:9px">'+(rm?'RM':'TC')+'</span></td>'
-          +'<td style="padding:6px 10px;text-align:center"><span style="background:'+(rm?'#7a4a1a':col2)+';color:#fff;padding:1px 6px;border-radius:8px;font-size:10px">'+(rm?'RM':'TC')+'</span></td>'
-          +'<td style="padding:6px 10px;text-align:center;font-weight:700">'+regs+'</td>'
-          +'<td style="padding:6px 10px;text-align:right;font-weight:600;color:'+(rm?'#7a4a1a':col2)+'">$'+monto.toLocaleString('es-AR')+'</td>'
-          +'</tr>';
-      }).join('')
-      +'<tr style="background:#f3f0f8;font-weight:700">'
-      +'<td colspan="5" style="padding:7px 10px;border-top:2px solid '+col2+'">TOTAL</td>'
-      +'<td style="padding:7px 10px;text-align:center;border-top:2px solid '+col2+'">'+totalRegs+'</td>'
-      +'<td style="padding:7px 10px;text-align:right;border-top:2px solid '+col2+';color:'+col2+'">$'+totalMonto.toLocaleString('es-AR')+'</td>'
-      +'</tr></tbody></table></div>';
-  }
+  // Todos los médicos: TC y RM separadas
+  var colorMed=medId==='medina'?'#1a3a6e':medId==='ortega'?'#4a1a7a':'#1a7a4a';
+  secciones+=seccionHTML(tcE,'TC','TOMOGRAFÍA COMPUTADA (TC)','#1a3a6e');
+  secciones+=seccionHTML(rmE,'RM','RESONANCIA MAGNÉTICA (RM)','#7a4a1a');
 
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Liquidación '+nombreMed+' — '+periodoLabel+'</title>'
     +'<style>body{font-family:Arial,sans-serif;margin:0;padding:24px;color:#222}h1{font-size:20px;margin:0 0 4px}'
