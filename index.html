@@ -332,6 +332,41 @@ async function saveEstado(orden, estado){
   // Respaldo local
   try { localStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
 }
+
+async function saveInformadoAtomico(orden, p){
+  // Guarda estado + timestamp en una sola operación atómica
+  try {
+    var now = new Date();
+    var tsISO = now.toISOString();
+    var tsFmt = now.getDate()+'/'+(now.getMonth()+1)+'/'+String(now.getFullYear()).slice(2)+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    console.log('[saveInformadoAtomico] orden:'+orden+' ts:'+tsFmt);
+    // Actualizar en memoria inmediatamente
+    estadoMap[orden]='informado';
+    if(window._estadoMap) window._estadoMap[orden]='informado';
+    var pFull=(window._pacientes&&window._pacientes.find(function(x){return x.orden===orden;}))||p;
+    if(pFull){ pFull.fechaInformado=tsFmt; pFull.fechaInformadoISO=tsISO; }
+    var pLocal=pacientes.find(function(x){return x.orden===orden;});
+    if(pLocal){ pLocal.fechaInformado=tsFmt; pLocal.fechaInformadoISO=tsISO; }
+    if(window._pacientes){
+      var pInMem=window._pacientes.find(function(x){return x.orden===orden;});
+      if(pInMem){ pInMem.fechaInformado=tsFmt; pInMem.fechaInformadoISO=tsISO; }
+    }
+    // Guardar estado en Firebase
+    await setDoc(DOC_ESTADO, estadoMap);
+    try { localStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
+    // Guardar timestamp en DOC_PACS
+    const snap = await getDoc(DOC_PACS);
+    var lista=[];
+    if(snap.exists()&&snap.data().lista&&Array.isArray(snap.data().lista)) lista=snap.data().lista;
+    var yaEstaIdx=lista.findIndex(function(x){return x.orden===orden;});
+    var src=pFull||p;
+    var entry={orden:src.orden,fecha:src.fecha,nombre:src.nombre,servicio:src.servicio,atencion:src.atencion||'',codigos:src.codigos||[],fechaInformado:tsFmt,fechaInformadoISO:tsISO};
+    if(src.fechaLlegada) entry.fechaLlegada=src.fechaLlegada;
+    if(yaEstaIdx===-1){ lista.push(entry); } else { lista[yaEstaIdx]=Object.assign(lista[yaEstaIdx],{fechaInformado:tsFmt,fechaInformadoISO:tsISO}); }
+    await setDoc(DOC_PACS,{lista:lista});
+    console.log('[saveInformadoAtomico] guardado OK');
+  } catch(e){ console.error('[saveInformadoAtomico] ERROR:',e); throw e; }
+}
 async function savePacientesExtra(){
   // Guardar TODOS los informados sin excepción
   var informados = pacientes.filter(function(p){
@@ -1587,8 +1622,7 @@ async function marcar(orden){
   if(p) p.estado='informado';
   estadoMap[orden]='informado'; // actualizar el mapa antes de renderizar
   renderMedico();
-  await saveEstado(orden,'informado');
-  await saveInformadoEnFirebase(p);
+  await saveInformadoAtomico(orden, p);
 }
 
 function logout(){
@@ -1629,8 +1663,7 @@ function abrirInformar(orden){
         if(pp) pp.estado='informado';
         estadoMap[orden]='informado';
         // Guardar en Firebase
-        await saveEstado(orden,'informado');
-        await saveInformadoEnFirebase(pp);
+        await saveInformadoAtomico(orden, pp);
         // Rerenderizar
         if(currentUser&&UROLES[currentUser].rol==='admin') renderAdmin(currentAdminTab);
         else if(currentUser) renderMedico();
