@@ -782,11 +782,28 @@ function renderAdmin(tab){
       // Generar filas de tabla
       function filasPDF(lista, tipo, offset){
         offset=offset||0;
-        return lista.map(function(p,i){
+        var diasNombres=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+        var mesesNombres=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+        var porDia=window._liqOrden==='informado';
+        var ultimoDia='';
+        var rows='';
+        lista.forEach(function(p,i){
           var regs=p.codigos?p.codigos.length:0;
           var monto=regs*(tipo==='RM'?VRM:VTC);
           var bg=i%2===0?'#ffffff':'#f8f9fc';
-          return '<tr style="background:'+bg+';page-break-inside:avoid">'+
+          // Separador de día si orden es por fecha de informe
+          if(porDia && p.fechaInformadoISO){
+            var d=new Date(p.fechaInformadoISO);
+            var diaKey=d.toISOString().substring(0,10);
+            if(diaKey!==ultimoDia){
+              ultimoDia=diaKey;
+              var diaLabel=diasNombres[d.getDay()]+' '+d.getDate()+' '+mesesNombres[d.getMonth()];
+              rows+='<tr><td colspan="7" style="padding:5px 10px;background:#f0f4fa;border-top:1.5px solid #c0ccdd;border-bottom:1px solid #c0ccdd;">'+
+                '<span style="font-size:10px;font-weight:700;color:#555;letter-spacing:0.05em;text-transform:uppercase;">'+diaLabel+'</span>'+
+                '</td></tr>';
+            }
+          }
+          rows+='<tr style="background:'+bg+';page-break-inside:avoid">'+
             '<td style="padding:6px 6px;border-bottom:1px solid #e8e8e8;text-align:center;color:#999;font-size:11px;width:28px">'+(offset+i+1)+'</td>'+
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;color:#555;font-size:11px">'+p.orden+'</td>'+
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;font-size:12px">'+p.fecha+'</td>'+
@@ -795,7 +812,8 @@ function renderAdmin(tab){
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;text-align:center;font-weight:700;font-size:13px">'+regs+'</td>'+
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;text-align:right;font-weight:600;font-size:12px;color:#1a3a6e">$'+monto.toLocaleString('es-AR')+'</td>'+
             '</tr>';
-        }).join('');
+        });
+        return rows;
       }
       // Construir sección TC y RM según médico
       var seccionesHTML='';
@@ -1433,10 +1451,26 @@ window.exportarMiLiqPDF=function(medId, mesSel){
 
   function filasHTML(lista,tipo){
     var col=tipo==='RM'?'#7a4a1a':'#1a3a6e';
-    return lista.map(function(p,i){
+    var diasNombres=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    var mesesNombres=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    var porDia=window._miliqOrden==='informado';
+    var ultimoDia='';
+    var rows='';
+    lista.forEach(function(p,i){
       var regs=p.codigos?p.codigos.length:0;
       var monto=regs*(tipo==='RM'?VRM:VTC);
-      return '<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+';page-break-inside:avoid">'
+      if(porDia && p.fechaInformadoISO){
+        var d=new Date(p.fechaInformadoISO);
+        var diaKey=d.toISOString().substring(0,10);
+        if(diaKey!==ultimoDia){
+          ultimoDia=diaKey;
+          var diaLabel=diasNombres[d.getDay()]+' '+d.getDate()+' '+mesesNombres[d.getMonth()];
+          rows+='<tr><td colspan="7" style="padding:5px 10px;background:#f0f4fa;border-top:1.5px solid #c0ccdd;border-bottom:1px solid #c0ccdd;">'+
+            '<span style="font-size:10px;font-weight:700;color:#555;letter-spacing:0.05em;text-transform:uppercase;">'+diaLabel+'</span>'+
+            '</td></tr>';
+        }
+      }
+      rows+='<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+';page-break-inside:avoid">'
         +'<td style="padding:6px 6px;text-align:center;color:#999;font-size:11px;width:28px">'+(i+1)+'</td>'
         +'<td style="padding:6px 10px;color:#555;font-size:11px">'+p.orden+'</td>'
         +'<td style="padding:6px 10px;font-size:12px">'+p.fecha+'</td>'
@@ -1445,7 +1479,8 @@ window.exportarMiLiqPDF=function(medId, mesSel){
         +'<td style="padding:6px 10px;text-align:center;font-weight:700;font-size:13px">'+regs+'</td>'
         +'<td style="padding:6px 10px;text-align:right;font-weight:600;font-size:12px;color:'+col+'">$'+monto.toLocaleString('es-AR')+'</td>'
         +'</tr>';
-    }).join('');
+    });
+    return rows;
   }
 
   function seccionHTML(lista, tipo, label, color){
