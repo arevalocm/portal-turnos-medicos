@@ -784,7 +784,8 @@ function renderAdmin(tab){
         offset=offset||0;
         var diasNombres=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
         var mesesNombres=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-        var porDia=window._liqOrden==='informado';
+        var selOrdenEl=document.getElementById('sel-orden-liq');
+        var porDia=(selOrdenEl?selOrdenEl.value:window._liqOrden)==='informado';
         var ultimoDia='';
         var rows='';
         lista.forEach(function(p,i){
@@ -1259,7 +1260,7 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
   html+='<div class="card-header"><span class="card-title">📊 Mi Liquidación</span>';
   html+='<div style="display:flex;align-items:center;gap:10px">';
   html+='<span style="font-size:12px;color:#666">Pacientes informados por período</span>';
-  html+='<select onchange="window._miliqOrden=this.value;renderMiLiquidacion_page()" style="padding:4px 8px;border:1px solid #ddd;border-radius:5px;font-size:11px">';
+  html+='<select id="sel-orden-miliq" onchange="window._miliqOrden=this.value;renderMiLiquidacion_page()" style="padding:4px 8px;border:1px solid #ddd;border-radius:5px;font-size:11px">';
   html+='<option value="fecha"'+(window._miliqOrden==='informado'?'':' selected')+'>Por fecha estudio</option>';
   html+='<option value="informado"'+(window._miliqOrden==='informado'?' selected':'')+'>Por fecha de informe</option>';
   html+='</select></div></div>';
@@ -1453,7 +1454,8 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     var col=tipo==='RM'?'#7a4a1a':'#1a3a6e';
     var diasNombres=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
     var mesesNombres=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-    var porDia=window._miliqOrden==='informado';
+    var selOrdenMiEl=document.getElementById('sel-orden-miliq');
+    var porDia=(selOrdenMiEl?selOrdenMiEl.value:window._miliqOrden)==='informado';
     var ultimoDia='';
     var rows='';
     lista.forEach(function(p,i){
