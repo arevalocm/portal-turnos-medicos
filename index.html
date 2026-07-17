@@ -1481,7 +1481,7 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     return rows;
   }
 
-  function seccionHTML(lista, tipo, label, color){
+  function seccionHTML(lista, tipo, label, color, porDia){
     if(lista.length===0) return '';
     var regs=lista.reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
     var monto=regs*(tipo==='RM'?VRM:VTC);
@@ -1498,7 +1498,7 @@ window.exportarMiLiqPDF=function(medId, mesSel){
       +'<th style="padding:7px 10px;text-align:center;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Reg.</th>'
       +'<th style="padding:7px 10px;text-align:right;font-size:11px;color:#444;border-bottom:2px solid '+color+'">Monto</th>'
       +'</tr></thead><tbody>'
-      +filasHTML(lista,tipo)
+      +filasHTML(lista,tipo,porDia)
       +'<tr style="background:'+bgH+';font-weight:700">'
       +'<td colspan="5" style="padding:7px 10px;border-top:2px solid '+color+'">SUBTOTAL '+tipo+'</td>'
       +'<td style="padding:7px 10px;text-align:center;border-top:2px solid '+color+'">'+regs+'</td>'
@@ -1509,8 +1509,8 @@ window.exportarMiLiqPDF=function(medId, mesSel){
   var secciones='';
   // Todos los médicos: TC y RM separadas
   var colorMed=medId==='medina'?'#1a3a6e':medId==='ortega'?'#4a1a7a':'#1a7a4a';
-  secciones+=seccionHTML(tcE,'TC','TOMOGRAFÍA COMPUTADA (TC)','#1a3a6e');
-  secciones+=seccionHTML(rmE,'RM','RESONANCIA MAGNÉTICA (RM)','#7a4a1a');
+  secciones+=seccionHTML(tcE,'TC','TOMOGRAFÍA COMPUTADA (TC)','#1a3a6e',ordenPorDiaMi);
+  secciones+=seccionHTML(rmE,'RM','RESONANCIA MAGNÉTICA (RM)','#7a4a1a',ordenPorDiaMi);
 
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Liquidación '+nombreMed+' — '+periodoLabel+'</title>'
     +'<style>body{font-family:Arial,sans-serif;margin:0;padding:24px;color:#222}h1{font-size:20px;margin:0 0 4px}'
