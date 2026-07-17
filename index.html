@@ -1432,7 +1432,7 @@ window.exportarMiLiqPDF=function(medId, mesSel){
     return (parts[1]+'/20'+parts[2])===mesSel;
   });
   estudios.sort(function(a,b){
-    if(window._miliqOrden==='informado'){
+    if(ordenPorDiaMi){
       var fa=a.fechaInformadoISO||'';
       var fb=b.fechaInformadoISO||'';
       if(fa&&!fb) return 1;
