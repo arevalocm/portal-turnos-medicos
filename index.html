@@ -1452,6 +1452,8 @@ window.exportarMiLiqPDF=function(medId, mesSel){
 
   function filasHTML(lista,tipo,porDia){
     var col=tipo==='RM'?'#7a4a1a':'#1a3a6e';
+    var diasNombres=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    var mesesNombres=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     var ultimoDia='';
     var rows='';
     lista.forEach(function(p,i){
