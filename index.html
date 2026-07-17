@@ -1327,9 +1327,23 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
       s+='<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ddd">Reg.</th>';
       s+='<th style="padding:6px 8px;text-align:right;border-bottom:1px solid #ddd">Monto</th>';
       s+='</tr></thead><tbody>';
+      var diasN=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+      var mesesN=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      var ultimoDiaP='';
       lista.forEach(function(p,i){
         var regs=p.codigos?p.codigos.length:0;
         var monto=regs*(tipo==='RM'?VRM:VTC);
+        if(window._miliqOrden==='informado' && p.fechaInformadoISO){
+          var d=new Date(p.fechaInformadoISO);
+          var diaKey=d.toISOString().substring(0,10);
+          if(diaKey!==ultimoDiaP){
+            ultimoDiaP=diaKey;
+            var diaLabel=diasN[d.getDay()]+' '+d.getDate()+' '+mesesN[d.getMonth()];
+            s+='<tr><td colspan="6" style="padding:4px 8px;background:#f0f4fa;border-top:1.5px solid #c0ccdd;border-bottom:1px solid #c0ccdd;">'+
+              '<span style="font-size:10px;font-weight:700;color:#555;letter-spacing:0.05em;text-transform:uppercase;">'+diaLabel+'</span>'+
+              '</td></tr>';
+          }
+        }
         s+='<tr style="background:'+(i%2===0?'#fff':'#f8f9fc')+';border-bottom:1px solid #f0f0f0">';
         s+='<td style="padding:5px 8px;color:#666;font-size:11px">'+p.orden+'</td>';
         s+='<td style="padding:5px 8px">'+p.fecha+'</td>';
