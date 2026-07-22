@@ -761,7 +761,7 @@ function renderAdmin(tab){
         return (parts[1]+'/20'+parts[2])===mesSel;
       });
       estudios.sort(function(a,b){
-        if(window._liqOrden==='informado'){
+        if(ordenPorDia){
           var fa=a.fechaInformadoISO||'';
           var fb=b.fechaInformadoISO||'';
           if(fa&&!fb) return 1;
@@ -781,11 +781,11 @@ function renderAdmin(tab){
       var tcMonto=tcRegs*VTC, rmMonto=rmRegs*VRM;
       var totalRegs=tcRegs+rmRegs, totalMonto=tcMonto+rmMonto;
       // Generar filas de tabla
-      function filasPDF(lista, tipo, offset, porDia){
+      function filasPDF(lista, tipo, offset, porDia, ultimoDiaInit){
         offset=offset||0;
         var diasNombres=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
         var mesesNombres=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-        var ultimoDia='';
+        var ultimoDia=ultimoDiaInit||'';
         var rows='';
         lista.forEach(function(p,i){
           var regs=p.codigos?p.codigos.length:0;
@@ -794,7 +794,7 @@ function renderAdmin(tab){
           // Separador de día si orden es por fecha de informe
           if(porDia && p.fechaInformadoISO){
             var d=new Date(p.fechaInformadoISO);
-            var diaKey=d.toISOString().substring(0,10);
+            var diaKey=d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
             if(diaKey!==ultimoDia){
               ultimoDia=diaKey;
               var diaLabel=diasNombres[d.getDay()]+' '+d.getDate()+' '+mesesNombres[d.getMonth()];
@@ -813,7 +813,7 @@ function renderAdmin(tab){
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;text-align:right;font-weight:600;font-size:12px;color:#1a3a6e">$'+monto.toLocaleString('es-AR')+'</td>'+
             '</tr>';
         });
-        return rows;
+        return {html:rows, ultimoDia:ultimoDia};
       }
       // Construir sección TC y RM según médico
       var seccionesHTML='';
@@ -1335,7 +1335,7 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
         var monto=regs*(tipo==='RM'?VRM:VTC);
         if(window._miliqOrden==='informado' && p.fechaInformadoISO){
           var d=new Date(p.fechaInformadoISO);
-          var diaKey=d.toISOString().substring(0,10);
+          var diaKey=d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
           if(diaKey!==ultimoDiaP){
             ultimoDiaP=diaKey;
             var diaLabel=diasN[d.getDay()]+' '+d.getDate()+' '+mesesN[d.getMonth()];
@@ -1475,7 +1475,7 @@ window.exportarMiLiqPDF=function(medId, mesSel){
       var monto=regs*(tipo==='RM'?VRM:VTC);
       if(porDia && p.fechaInformadoISO){
         var d=new Date(p.fechaInformadoISO);
-        var diaKey=d.toISOString().substring(0,10);
+        var diaKey=d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
         if(diaKey!==ultimoDia){
           ultimoDia=diaKey;
           var diaLabel=diasNombres[d.getDay()]+' '+d.getDate()+' '+mesesNombres[d.getMonth()];
