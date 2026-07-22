@@ -781,11 +781,11 @@ function renderAdmin(tab){
       var tcMonto=tcRegs*VTC, rmMonto=rmRegs*VRM;
       var totalRegs=tcRegs+rmRegs, totalMonto=tcMonto+rmMonto;
       // Generar filas de tabla
-      function filasPDF(lista, tipo, offset, porDia, ultimoDiaInit){
+      function filasPDF(lista, tipo, offset, porDia){
         offset=offset||0;
         var diasNombres=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
         var mesesNombres=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-        var ultimoDia=ultimoDiaInit||'';
+        var ultimoDia='';
         var rows='';
         lista.forEach(function(p,i){
           var regs=p.codigos?p.codigos.length:0;
@@ -813,7 +813,7 @@ function renderAdmin(tab){
             '<td style="padding:6px 10px;border-bottom:1px solid #e8e8e8;text-align:right;font-weight:600;font-size:12px;color:#1a3a6e">$'+monto.toLocaleString('es-AR')+'</td>'+
             '</tr>';
         });
-        return {html:rows, ultimoDia:ultimoDia};
+        return rows;
       }
       // Construir sección TC y RM según médico
       var seccionesHTML='';
