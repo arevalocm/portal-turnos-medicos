@@ -1055,12 +1055,7 @@ async function reasignar(orden,medId){
   overrides[orden]=medId;
   var scrollPos=window.scrollY||document.documentElement.scrollTop;
   renderAdmin('estudios');
-  // Doble rAF para asegurar que el DOM terminó de renderizar
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      window.scrollTo(0,scrollPos);
-    });
-  });
+  setTimeout(function(){ window.scrollTo(0,scrollPos); }, 50);
   await saveAsignaciones();
   await saveOverrides();
 }
