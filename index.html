@@ -1053,27 +1053,9 @@ async function reasignar(orden,medId){
   if(!medId)return;
   asignaciones[orden]=medId;
   overrides[orden]=medId;
-  // Regenerar solo el tbody sin tocar el resto del DOM
-  var tbody=document.querySelector('#tabla-admin tbody');
-  if(tbody){
-    var scrollPos=window.scrollY||document.documentElement.scrollTop;
-    // Generar nuevo contenido del tbody
-    var newRows='';
-    pacientes.slice().sort(function(a,b){
-      var fa=a.fecha.split('/').reverse().join('');
-      var fb=b.fecha.split('/').reverse().join('');
-      return fa>fb?1:fa<fb?-1:0;
-    }).forEach(function(p){
-      var col=colorLlegada(p);
-      var ml=function(id){var mn={medina:'Medina',ortega:'Ortega',arevalo:'Arévalo'};return mn[id]||'—';};
-      var ab=function(a){return a==='Urgencia'?'🔴':a==='Programado'?'🟢':a==='Internado'?'🟡':'';};
-      newRows+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td style="font-size:11px;color:'+col+'">'+( p.fechaLlegada||'—')+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+ml(asignaciones[p.orden])+'</td><td>'+(estadoMap[p.orden]==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td><select class="sel-inline" onchange="reasignar(\''+p.orden+'\',this.value)">'+MEDICOS.map(function(m){return'<option value="'+m.id+'"'+(asignaciones[p.orden]===m.id?' selected':'')+'>'+m.nombre.split(' ').pop()+'</option>';}).join('')+'</select></td><td><button class="btn btn-sm" onclick="abrirInformar(\''+p.orden+'\')">Abrir</button></td></tr>';
-    });
-    tbody.innerHTML=newRows;
-    window.scrollTo(0,scrollPos);
-  } else {
-    renderAdmin('estudios');
-  }
+  var scrollPos=window.scrollY||document.documentElement.scrollTop;
+  renderAdmin('estudios');
+  setTimeout(function(){ window.scrollTo(0,scrollPos); }, 150);
   await saveAsignaciones();
   await saveOverrides();
 }
