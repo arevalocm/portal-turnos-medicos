@@ -1691,7 +1691,11 @@ function abrirInformar(orden){
   var w=window.open(url,'_blank','width=1200,height=850,scrollbars=yes');
   if(!w){window.open(url,'_blank');return;}
   // Detectar cuando el médico cierra la ventana del RIS
+  // Esperar 3 segundos antes de empezar a verificar (para que el RIS cargue)
+  var checkActivo=false;
+  setTimeout(function(){checkActivo=true;},3000);
   var check=setInterval(async function(){
+    if(!checkActivo) return;
     if(w.closed){
       clearInterval(check);
       // Mostrar diálogo de confirmación
