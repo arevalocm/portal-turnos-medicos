@@ -1688,26 +1688,22 @@ function logout(){
 
 function abrirInformar(orden){
   var url=BASE+orden+'/';
-  var w=window.open(url,'_blank','width=1200,height=850,scrollbars=yes');
-  if(!w){window.open(url,'_blank');return;}
-  var p=pacientes.filter(function(x){return x.orden===orden;})[0];
-  var nombre=p?p.nombre:'este estudio';
-  var check=setInterval(async function(){
-    // Solo actuar si la ventana del RIS se cerró Y el portal tiene el foco
-    if(w.closed && document.hasFocus()){
-      clearInterval(check);
-      var overlay=document.createElement('div');
-      overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
-      overlay.innerHTML='<div style="background:#fff;border-radius:10px;padding:2rem;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">'+
-        '<div style="font-size:15px;font-weight:bold;margin-bottom:8px">¿Terminaste el informe?</div>'+
-        '<div style="font-size:13px;color:#666;margin-bottom:1.5rem"><b>'+nombre+'</b><br>Si cerraste sin informar, hacé clic en <b>No</b>.</div>'+
-        '<div style="display:flex;gap:10px">'+
-        '<button id="btn-si" style="flex:1;padding:10px;background:#1a7a4a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer">✓ Sí, ya lo informé</button>'+
-        '<button id="btn-no" style="flex:1;padding:10px;background:#f0f0ee;color:#333;border:1px solid #ccc;border-radius:6px;font-size:14px;cursor:pointer">No, volver a la lista</button>'+
-        '</div></div>';
-      document.body.appendChild(overlay);
-      document.getElementById('btn-si').onclick=async function(){
-        document.body.removeChild(overlay);
+  window.open(url,'_blank');
+  // Reemplazar el botón "Informar" con dos botones: "Ya lo informé" y "Volver"
+  // Buscar el botón por orden en todos los contextos (admin y médico)
+  var btns=document.querySelectorAll('.btn-informar, .btn.btn-sm');
+  btns.forEach(function(btn){
+    if(btn.getAttribute('onclick') && btn.getAttribute('onclick').indexOf(orden)!==-1){
+      var container=btn.parentNode;
+      btn.style.display='none';
+      // Crear los dos botones de confirmación
+      var si=document.createElement('button');
+      si.textContent='✓ Informado';
+      si.style.cssText='padding:5px 10px;background:#1a7a4a;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:bold;cursor:pointer;margin-right:4px;';
+      var no=document.createElement('button');
+      no.textContent='✗ Volver';
+      no.style.cssText='padding:5px 10px;background:#f0f0ee;color:#555;border:1px solid #ccc;border-radius:5px;font-size:12px;cursor:pointer;';
+      si.onclick=async function(){
         var pp=pacientes.filter(function(x){return x.orden===orden;})[0];
         if(pp) pp.estado='informado';
         estadoMap[orden]='informado';
@@ -1715,11 +1711,14 @@ function abrirInformar(orden){
         if(currentUser&&UROLES[currentUser].rol==='admin') renderAdmin(currentAdminTab);
         else if(currentUser) renderMedico();
       };
-      document.getElementById('btn-no').onclick=function(){
-        document.body.removeChild(overlay);
+      no.onclick=function(){
+        si.remove(); no.remove();
+        btn.style.display='';
       };
+      container.appendChild(si);
+      container.appendChild(no);
     }
-  },1000);
+  });
 }
 
 // ── Exponer funciones globales ───────────────────────────────────────────────
