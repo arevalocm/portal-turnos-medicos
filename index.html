@@ -1688,17 +1688,14 @@ function logout(){
 
 function abrirInformar(orden){
   var url=BASE+orden+'/';
-  window.open(url,'_blank');
+  var w=window.open(url,'_blank','width=1200,height=850,scrollbars=yes');
+  if(!w){window.open(url,'_blank');return;}
   var p=pacientes.filter(function(x){return x.orden===orden;})[0];
   var nombre=p?p.nombre:'este estudio';
-  var yaActivo=false;
-  var primerFoco=true;
-  function onFocus(){
-    if(primerFoco){ primerFoco=false; return; }
-    if(yaActivo) return;
-    yaActivo=true;
-    window.removeEventListener('focus',onFocus);
-    setTimeout(function(){
+  var check=setInterval(async function(){
+    // Solo actuar si la ventana del RIS se cerró Y el portal tiene el foco
+    if(w.closed && document.hasFocus()){
+      clearInterval(check);
       var overlay=document.createElement('div');
       overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
       overlay.innerHTML='<div style="background:#fff;border-radius:10px;padding:2rem;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">'+
@@ -1721,11 +1718,8 @@ function abrirInformar(orden){
       document.getElementById('btn-no').onclick=function(){
         document.body.removeChild(overlay);
       };
-    },300);
-  }
-  setTimeout(function(){
-    window.addEventListener('focus',onFocus);
-  },500);
+    }
+  },1000);
 }
 
 // ── Exponer funciones globales ───────────────────────────────────────────────
