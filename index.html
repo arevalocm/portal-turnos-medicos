@@ -1691,9 +1691,17 @@ function abrirInformar(orden){
   var w=window.open(url,'_blank','width=1200,height=850,scrollbars=yes');
   if(!w){window.open(url,'_blank');return;}
   // Detectar cuando el médico cierra la ventana del RIS
-  // Esperar 3 segundos antes de empezar a verificar (para que el RIS cargue)
+  // Esperar a que la ventana cargue completamente antes de monitorear
+  // Usamos un flag que se activa recién cuando la ventana dejó de ser null y estuvo abierta
   var checkActivo=false;
-  setTimeout(function(){checkActivo=true;},3000);
+  var checkInicio=setInterval(function(){
+    // La ventana existe y no está cerrada → empezar a monitorear
+    if(w && !w.closed){
+      clearInterval(checkInicio);
+      // Dar 5 segundos adicionales para que el RIS termine cualquier redirect
+      setTimeout(function(){checkActivo=true;},5000);
+    }
+  },200);
   var check=setInterval(async function(){
     if(!checkActivo) return;
     if(w.closed){
