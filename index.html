@@ -1688,15 +1688,47 @@ function logout(){
 
 function abrirInformar(orden){
   var url=BASE+orden+'/';
-  window.open(url,'_blank');
-  // Reemplazar el botón "Informar" con dos botones: "Ya lo informé" y "Volver"
-  // Buscar el botón por orden en todos los contextos (admin y médico)
+  var p=pacientes.filter(function(x){return x.orden===orden;})[0];
+  var nombre=p?p.nombre:'este estudio';
+
+  // Abrir inmediatamente para evitar bloqueo de popups
+  var w=window.open('about:blank','ventanaInforme','popup,width=1200,height=900,scrollbars=yes,resizable=yes');
+  if(!w){
+    window.open(url,'_blank');
+    mostrarBotonesInformar(orden, nombre, null);
+    return;
+  }
+
+  // Intentar Window Management API (Chrome/Edge con HTTPS)
+  if('getScreenDetails' in window){
+    window.getScreenDetails().then(function(details){
+      var actual=details.currentScreen;
+      var destino=details.screens.find(function(s){
+        return s.availLeft!==actual.availLeft || s.availTop!==actual.availTop;
+      });
+      if(destino){
+        w.moveTo(destino.availLeft, destino.availTop);
+        w.resizeTo(destino.availWidth, destino.availHeight);
+      }
+      w.location.replace(url);
+      w.focus();
+    }).catch(function(){
+      w.location.replace(url);
+    });
+  } else {
+    w.location.replace(url);
+  }
+
+  mostrarBotonesInformar(orden, nombre, w);
+}
+
+function mostrarBotonesInformar(orden, nombre, w){
+  // Reemplazar el botón Informar con ✓ Informado y ✗ Volver en la misma fila
   var btns=document.querySelectorAll('.btn-informar, .btn.btn-sm');
   btns.forEach(function(btn){
     if(btn.getAttribute('onclick') && btn.getAttribute('onclick').indexOf(orden)!==-1){
       var container=btn.parentNode;
       btn.style.display='none';
-      // Crear los dos botones de confirmación
       var si=document.createElement('button');
       si.textContent='✓ Informado';
       si.style.cssText='padding:5px 10px;background:#1a7a4a;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:bold;cursor:pointer;margin-right:4px;';
