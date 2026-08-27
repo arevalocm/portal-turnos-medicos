@@ -353,7 +353,7 @@ async function saveInformadoAtomico(orden, p){
       if(pInMem){ pInMem.fechaInformado=tsFmt; pInMem.fechaInformadoISO=tsISO; }
     }
     // Guardar estado en Firebase
-    await setDoc(DOC_ESTADO, estadoMap);
+    await setDoc(DOC_ESTADO, estadoMap, {merge: true});
     try { localStorage.setItem('estadoMap_backup', JSON.stringify(estadoMap)); } catch(e){}
     // Guardar timestamp en DOC_PACS
     const snap = await getDoc(DOC_PACS);
