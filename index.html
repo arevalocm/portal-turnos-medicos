@@ -1697,6 +1697,9 @@ function abrirInformar(orden){
   var p=pacientes.filter(function(x){return x.orden===orden;})[0];
   var nombre=p?p.nombre:'este estudio';
 
+  // Mostrar botones ANTES de abrir ventana (sincrónico)
+  mostrarBotonesInformar(orden, nombre, null);
+
   // Abrir inmediatamente para evitar bloqueo de popups
   var w=window.open('about:blank','ventanaInforme','popup,width=1200,height=900,scrollbars=yes,resizable=yes');
   if(!w){
@@ -1725,7 +1728,6 @@ function abrirInformar(orden){
     w.location.replace(url);
   }
 
-  mostrarBotonesInformar(orden, nombre, w);
 }
 
 function mostrarBotonesInformar(orden, nombre, w){
