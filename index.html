@@ -79,7 +79,7 @@ select,input{padding:6px 10px;border-radius:5px;border:1px solid #ccc;font-size:
 .av-admin{background:#e8f0fb;color:#0f3a72}
 .av0{background:#e3f5f2;color:#084f46}
 .av1{background:#fdf3e3;color:#6b3d00}
-.av2{background:#e8f0fb;color:#0f3a72}
+.av2{background:#e8f0fb;color:#0f3a72}.av3{background:#fff3e0;color:#e06010}.b-m3{background:#f0a030;color:#fff}
 .loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f0f0ee;flex-direction:column;gap:12px;color:#666;font-size:14px}
 .spinner{width:32px;height:32px;border:3px solid #ddd;border-top-color:#1a56a0;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -110,14 +110,15 @@ const db = getFirestore(app);
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 var BASE='https://ris.tomografodelestado.com.ar/informe/informe_crearmedico/';
-var PINS={admin:'9045',medina:'4159',ortega:'2067',arevalo_med:'9208'};
+var PINS={admin:'9045',medina:'4159',ortega:'2067',arevalo_med:'9208',mohanna_med:'7342'};
 var MEDICOS=[
   {id:'medina',nombre:'Dr. Gabriel Medina',ini:'GM',av:'av0',bc:'b-m0'},
   {id:'ortega',nombre:'Dra. Cinthya Ortega',ini:'CO',av:'av1',bc:'b-m1'},
-  {id:'arevalo',nombre:'Dr. Carlos Arévalo',ini:'CA',av:'av2',bc:'b-m2'}
+  {id:'arevalo',nombre:'Dr. Carlos Arévalo',ini:'CA',av:'av2',bc:'b-m2'},
+  {id:'mohanna',nombre:'Dr. Roberto Mohanna',ini:'RM',av:'av3',bc:'b-m3'}
 ];
-var UROLES={admin:{rol:'admin'},medina:{rol:'medico',idx:0},ortega:{rol:'medico',idx:1},arevalo_med:{rol:'medico',idx:2}};
-var ROT=['arevalo','ortega','medina'];
+var UROLES={admin:{rol:'admin'},medina:{rol:'medico',idx:0},ortega:{rol:'medico',idx:1},arevalo_med:{rol:'medico',idx:2},mohanna_med:{rol:'medico',idx:3}};
+var ROT=['arevalo','ortega','medina','mohanna'];
 
 // ── Extracción de códigos — SELECTOR DEFINITIVO ─────────────────────────────
 // La página del RIS usa <dl class="dl-horizontal"> con <dt>/<dd> para los campos.
@@ -151,7 +152,7 @@ const DOC_PACS = doc(db, 'portal', 'pacientes_extra');
 const DOC_CONFIG = doc(db, 'portal', 'config');
 
 // Cuotas mensuales de códigos por médico
-var CUOTAS={ortega:220, medina:150};
+var CUOTAS={ortega:220, medina:150, mohanna:220};
 
 // Valores de liquidación (editables por admin, persisten en Firebase)
 var CONFIG_LIQ={val_tc:5250, val_rm:7000};
@@ -183,7 +184,7 @@ function autoAsignar(pacs){
 
   // Acumulador limpio — solo cuenta lo que se asigna en esta pasada
   // No usa asignaciones previas de Firebase para evitar sesgos
-  var acum={ortega:0, medina:0, arevalo:0};
+  var acum={ortega:0, medina:0, arevalo:0, mohanna:0};
 
   pacs.forEach(function(p){
     var s=(p.servicio||'').toUpperCase();
@@ -196,28 +197,32 @@ function autoAsignar(pacs){
 
     var nCods=p.codigos?p.codigos.length:1;
 
-    // Distribuir siempre en proporción fija entre los 3 médicos
-    // Proporción: ortega 44% : medina 30% : arevalo 26%
-    // (basado en cuotas 220:150:130)
-    // El que tenga menor proporción relativa recibe el próximo estudio
-    var total = acum.ortega + acum.medina + acum.arevalo + 0.001;
-    var propOrtega = acum.ortega / total;
-    var propMedina = acum.medina / total;
+    // Distribuir en proporción fija entre los 4 médicos (solo TC)
+    // Total cuotas TC: ortega 220 + medina 150 + arevalo 130 + mohanna 220 = 720
+    // Proporciones: ortega 30.6% : medina 20.8% : arevalo 18.1% : mohanna 30.6%
+    var total = acum.ortega + acum.medina + acum.arevalo + acum.mohanna + 0.001;
+    var propOrtega  = acum.ortega  / total;
+    var propMedina  = acum.medina  / total;
     var propArevalo = acum.arevalo / total;
+    var propMohanna = acum.mohanna / total;
 
-    var TARGET_ORTEGA = 0.44;
-    var TARGET_MEDINA = 0.30;
-    var TARGET_AREVALO = 0.26;
+    var TARGET_ORTEGA  = 0.306;
+    var TARGET_MEDINA  = 0.208;
+    var TARGET_AREVALO = 0.181;
+    var TARGET_MOHANNA = 0.306;
 
-    var defOrtega = TARGET_ORTEGA - propOrtega;
-    var defMedina = TARGET_MEDINA - propMedina;
+    var defOrtega  = TARGET_ORTEGA  - propOrtega;
+    var defMedina  = TARGET_MEDINA  - propMedina;
     var defArevalo = TARGET_AREVALO - propArevalo;
+    var defMohanna = TARGET_MOHANNA - propMohanna;
 
     var elegido;
-    if(defOrtega >= defMedina && defOrtega >= defArevalo){
+    if(defOrtega >= defMedina && defOrtega >= defArevalo && defOrtega >= defMohanna){
       elegido='ortega';
-    } else if(defMedina >= defOrtega && defMedina >= defArevalo){
+    } else if(defMedina >= defOrtega && defMedina >= defArevalo && defMedina >= defMohanna){
       elegido='medina';
+    } else if(defMohanna >= defOrtega && defMohanna >= defMedina && defMohanna >= defArevalo){
+      elegido='mohanna';
     } else {
       elegido='arevalo';
     }
@@ -455,8 +460,26 @@ function syncBanner(){
 }
 
 // ── Login ───────────────────────────────────────────────────────────────────
+function getParamM(){var s=window.location.search;var m=s.match(/[?&]m=([^&]*)/);return m?m[1].toLowerCase():null;}
 function renderLogin(err){
-  document.getElementById('root').innerHTML='<div class="login-wrap"><div class="login-card"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem">Tomógrafo del Estado S.E.</div><div class="login-title">Portal de Turnos</div><div class="login-sub">Ingresá tu usuario y PIN para ver tus pacientes</div><div class="field"><label>Usuario</label><select id="usr"><option value="">Seleccioná tu nombre...</option><option value="medina">Dr. Gabriel Medina</option><option value="ortega">Dra. Cinthya Ortega</option><option value="arevalo_med">Dr. Carlos Arévalo</option><option value="admin">Administrador</option></select></div><div class="field"><label>PIN de acceso</label><div class="pin-row"><input class="pin-box" id="p0" type="password" maxlength="1" inputmode="numeric" oninput="pi(0)" onkeydown="pk(event,0)"><input class="pin-box" id="p1" type="password" maxlength="1" inputmode="numeric" oninput="pi(1)" onkeydown="pk(event,1)"><input class="pin-box" id="p2" type="password" maxlength="1" inputmode="numeric" oninput="pi(2)" onkeydown="pk(event,2)"><input class="pin-box" id="p3" type="password" maxlength="1" inputmode="numeric" oninput="pi(3)" onkeydown="pk(event,3)"></div></div><div class="err" id="er">'+(err||'')+'</div><button class="btn-login" onclick="doLogin()">Ingresar</button></div></div>';
+  var paramM=getParamM();
+  // Mapeo param -> usuario
+  var paramMap={medina:'medina',ortega:'ortega',arevalo:'arevalo_med',mohanna:'mohanna_med'};
+  var usuarioParam=paramMap[paramM]||null;
+  // Opciones visibles según param
+  var opts='';
+  if(!paramM){
+    // Arévalo sin param: ve su médico y admin
+    opts='<option value="">Seleccioná...</option><option value="arevalo_med">Dr. Carlos Arévalo</option><option value="admin">Administrador</option>';
+  } else if(usuarioParam){
+    // Médico específico: solo su opción
+    var nombres={medina:'Dr. Gabriel Medina',ortega:'Dra. Cinthya Ortega',mohanna_med:'Dr. Roberto Mohanna'};
+    opts='<option value="'+usuarioParam+'">'+nombres[usuarioParam]+'</option>';
+  } else {
+    opts='<option value="">Seleccioná...</option>';
+  }
+  document.getElementById('root').innerHTML='<div class="login-wrap"><div class="login-card"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem">Tomógrafo del Estado S.E.</div><div class="login-title">Portal de Turnos</div><div class="login-sub">Ingresá tu usuario y PIN para ver tus pacientes</div><div class="field"><label>Usuario</label><select id="usr"><option value="">Seleccioná tu nombre...</option><option value="medina">Dr. Gabriel Medina</option><option value="ortega">Dra. Cinthya Ortega</option><option value="arevalo_med">Dr. Carlos Arévalo</option><option value="mohanna_med">Dr. Roberto Mohanna</option><option value="admin">Administrador</option></select></div><div class="field"><label>PIN de acceso</label><div class="pin-row"><input class="pin-box" id="p0" type="password" maxlength="1" inputmode="numeric" oninput="pi(0)" onkeydown="pk(event,0)"><input class="pin-box" id="p1" type="password" maxlength="1" inputmode="numeric" oninput="pi(1)" onkeydown="pk(event,1)"><input class="pin-box" id="p2" type="password" maxlength="1" inputmode="numeric" oninput="pi(2)" onkeydown="pk(event,2)"><input class="pin-box" id="p3" type="password" maxlength="1" inputmode="numeric" oninput="pi(3)" onkeydown="pk(event,3)"></div></div><div class="err" id="er">'+(err||'')+'</div><button class="btn-login" onclick="doLogin()">Ingresar</button></div></div>';
+  if(usuarioParam && document.getElementById('usr')){document.getElementById('usr').value=usuarioParam;}
 }
 function pi(i){var v=document.getElementById('p'+i).value;if(v&&i<3)document.getElementById('p'+(i+1)).focus();if(i===3)setTimeout(doLogin,80);}
 function pk(e,i){if(e.key==='Backspace'&&!document.getElementById('p'+i).value&&i>0)document.getElementById('p'+(i-1)).focus();}
@@ -590,7 +613,7 @@ function renderAdmin(tab){
     panelConfig+='<button onclick="guardarConfigLiq()" style="background:#1a7a4a;color:#fff;border:none;padding:8px 18px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;margin-top:16px">Guardar</button>';
     panelConfig+='<span id="msg-config-liq" style="font-size:12px;color:#1a7a4a;margin-top:16px"></span>';
     panelConfig+='</div></div>';
-    var mn={arevalo:'Dr. Carlos Arévalo',ortega:'Dra. Cinthya Ortega',medina:'Dr. Gabriel Medina'};
+    var mn={arevalo:'Dr. Carlos Arévalo',ortega:'Dra. Cinthya Ortega',medina:'Dr. Gabriel Medina',mohanna:'Dr. Roberto Mohanna'};
     var tbl='<div class="card"><div class="card-header"><span class="card-title">Liquidación mensual — '+(mesSel||'Sin período seleccionado')+'</span>'+selMes+'</div>'+panelConfig;
 
     if(!mesSel||mksDisp.length===0){
