@@ -602,6 +602,7 @@ function renderAdmin(tab){
     selMes+='<button onclick="exportarLiqPDF(\'medina\')" class="btn btn-sm" style="background:#1a3a6e;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">📄 PDF Medina</button>';
     selMes+='<button onclick="exportarLiqPDF(\'ortega\')" class="btn btn-sm" style="background:#4a1a7a;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">📄 PDF Ortega</button>';
     selMes+='<button onclick="exportarLiqPDF(\'arevalo\')" class="btn btn-sm" style="background:#1a7a4a;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">📄 PDF Arévalo</button>';
+    selMes+='<button onclick="exportarLiqPDF(\'mohanna\')" class="btn btn-sm" style="background:#e06010;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">📄 PDF Mohanna</button>';
     selMes+='<button onclick="toggleConfigLiq()" class="btn btn-sm" style="background:#888;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px" title="Editar valores por región">⚙ Valores</button>';
     selMes+='<select id="sel-orden-liq" onchange="window._liqOrden=this.value;renderAdmin(\'liquidacion\')" style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:12px">';
     selMes+='<option value="fecha"'+(window._liqOrden==='informado'?'':' selected')+'>Por fecha estudio</option>';
@@ -892,8 +893,8 @@ function renderAdmin(tab){
         }
       } else {
         // Ortega y Arévalo: TC y RM separadas igual que Medina
-        var color=medId==='ortega'?'#4a1a7a':'#1a7a4a';
-        var bgLight=medId==='ortega'?'#f3eef8':'#eef5f0';
+        var color=medId==='ortega'?'#4a1a7a':medId==='mohanna'?'#e06010':'#1a7a4a';
+        var bgLight=medId==='ortega'?'#f3eef8':medId==='mohanna'?'#fff3e0':'#eef5f0';
         if(tcEstudios.length>0){
           seccionesHTML+='<div style="margin-bottom:24px">'+
             '<div style="background:'+color+';color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;font-size:13px;font-weight:700">'+
