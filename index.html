@@ -478,8 +478,15 @@ function renderLogin(err){
   } else {
     opts='<option value="">Seleccioná...</option>';
   }
-  document.getElementById('root').innerHTML='<div class="login-wrap"><div class="login-card"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem">Tomógrafo del Estado S.E.</div><div class="login-title">Portal de Turnos</div><div class="login-sub">Ingresá tu usuario y PIN para ver tus pacientes</div><div class="field"><label>Usuario</label><select id="usr"><option value="">Seleccioná tu nombre...</option><option value="medina">Dr. Gabriel Medina</option><option value="ortega">Dra. Cinthya Ortega</option><option value="arevalo_med">Dr. Carlos Arévalo</option><option value="mohanna_med">Dr. Roberto Mohanna</option><option value="admin">Administrador</option></select></div><div class="field"><label>PIN de acceso</label><div class="pin-row"><input class="pin-box" id="p0" type="password" maxlength="1" inputmode="numeric" oninput="pi(0)" onkeydown="pk(event,0)"><input class="pin-box" id="p1" type="password" maxlength="1" inputmode="numeric" oninput="pi(1)" onkeydown="pk(event,1)"><input class="pin-box" id="p2" type="password" maxlength="1" inputmode="numeric" oninput="pi(2)" onkeydown="pk(event,2)"><input class="pin-box" id="p3" type="password" maxlength="1" inputmode="numeric" oninput="pi(3)" onkeydown="pk(event,3)"></div></div><div class="err" id="er">'+(err||'')+'</div><button class="btn-login" onclick="doLogin()">Ingresar</button></div></div>';
-  if(usuarioParam && document.getElementById('usr')){document.getElementById('usr').value=usuarioParam;}
+  // Si hay un solo médico en opts, ocultamos el select y lo dejamos fijo
+  var selectHtml;
+  if(usuarioParam){
+    var nombres2={medina:'Dr. Gabriel Medina',ortega:'Dra. Cinthya Ortega',arevalo_med:'Dr. Carlos Arévalo',mohanna_med:'Dr. Roberto Mohanna'};
+    selectHtml='<div style="padding:8px 0;font-weight:600;color:#333;font-size:15px">'+nombres2[usuarioParam]+'</div><input type="hidden" id="usr" value="'+usuarioParam+'">';
+  } else {
+    selectHtml='<select id="usr">'+opts+'</select>';
+  }
+  document.getElementById('root').innerHTML='<div class="login-wrap"><div class="login-card"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem">Tomógrafo del Estado S.E.</div><div class="login-title">Portal de Turnos</div><div class="login-sub">Ingresá tu PIN para ver tus pacientes</div><div class="field"><label>Usuario</label>'+selectHtml+'</div><div class="field"><label>PIN de acceso</label><div class="pin-row"><input class="pin-box" id="p0" type="password" maxlength="1" inputmode="numeric" oninput="pi(0)" onkeydown="pk(event,0)"><input class="pin-box" id="p1" type="password" maxlength="1" inputmode="numeric" oninput="pi(1)" onkeydown="pk(event,1)"><input class="pin-box" id="p2" type="password" maxlength="1" inputmode="numeric" oninput="pi(2)" onkeydown="pk(event,2)"><input class="pin-box" id="p3" type="password" maxlength="1" inputmode="numeric" oninput="pi(3)" onkeydown="pk(event,3)"></div></div><div class="err" id="er">'+(err||'')+'</div><button class="btn-login" onclick="doLogin()">Ingresar</button></div></div>';
 }
 function pi(i){var v=document.getElementById('p'+i).value;if(v&&i<3)document.getElementById('p'+(i+1)).focus();if(i===3)setTimeout(doLogin,80);}
 function pk(e,i){if(e.key==='Backspace'&&!document.getElementById('p'+i).value&&i>0)document.getElementById('p'+(i-1)).focus();}
