@@ -630,7 +630,7 @@ function renderAdmin(tab){
       });
 
       // Resumen general
-      var resumen={medina:{tc:0,rm:0,tcR:0,rmR:0},ortega:{tc:0,rm:0,tcR:0,rmR:0},arevalo:{tc:0,rm:0,tcR:0,rmR:0}};
+      var resumen={medina:{tc:0,rm:0,tcR:0,rmR:0},ortega:{tc:0,rm:0,tcR:0,rmR:0},arevalo:{tc:0,rm:0,tcR:0,rmR:0},mohanna:{tc:0,rm:0,tcR:0,rmR:0}};
       estudiosMes.forEach(function(p){
         var med=todasAsignaciones[p.orden];
         if(!resumen[med]) return;
@@ -640,9 +640,9 @@ function renderAdmin(tab){
       });
 
       // Tarjetas resumen
-      tbl+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:1rem 1rem 0">';
-      ['medina','ortega','arevalo'].forEach(function(med){
-        var r=resumen[med];
+      tbl+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:1rem 1rem 0">';
+      ['medina','ortega','arevalo','mohanna'].forEach(function(med){
+        var r=resumen[med]||{tc:0,tcR:0,rm:0,rmR:0};
         var totalR=r.tcR+r.rmR;
         var monto=(r.tcR*VAL_TC)+(r.rmR*VAL_RM);
         var montoFmt='$'+monto.toLocaleString('es-AR');
@@ -656,9 +656,23 @@ function renderAdmin(tab){
       });
       tbl+='</div>';
 
+      // Total general de los 4 médicos
+      var totalGenRegs=0, totalGenMonto=0;
+      ['medina','ortega','arevalo','mohanna'].forEach(function(m){
+        var r=resumen[m]||{tc:0,tcR:0,rm:0,rmR:0};
+        totalGenRegs+=(r.tcR+r.rmR);
+        totalGenMonto+=(r.tcR*VAL_TC)+(r.rmR*VAL_RM);
+      });
+      tbl+='<div style="margin:0.5rem 1rem 0;background:#1a1a4e;color:#fff;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">';
+      tbl+='<div style="font-weight:700;font-size:13px">TOTAL GENERAL — '+mesSel.replace('-','/')+'</div>';
+      tbl+='<div style="display:flex;gap:24px;align-items:center">';
+      tbl+='<span style="font-size:13px"><b>'+totalGenRegs+'</b> regiones</span>';
+      tbl+='<span style="font-size:16px;font-weight:700">$'+totalGenMonto.toLocaleString('es-AR')+'</span>';
+      tbl+='</div></div>';
+
       // Tabla detalle por médico — acordeón colapsable
-      var colores={medina:'#1a3a6e',ortega:'#4a1a7a',arevalo:'#1a7a4a'};
-      ['medina','ortega','arevalo'].forEach(function(med){
+      var colores={medina:'#1a3a6e',ortega:'#4a1a7a',arevalo:'#1a7a4a',mohanna:'#e06010'};
+      ['medina','ortega','arevalo','mohanna'].forEach(function(med){
         var estudios=estudiosMes.filter(function(p){return todasAsignaciones[p.orden]===med;});
         if(estudios.length===0) return;
         var r=resumen[med];
