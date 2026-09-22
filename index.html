@@ -182,9 +182,12 @@ function autoAsignar(pacs){
   var mmHoy=String(hoy.getMonth()+1).padStart(2,'0');
   var yyHoy=String(hoy.getFullYear()).slice(2);
 
-  // Acumulador limpio — solo cuenta lo que se asigna en esta pasada
-  // No usa asignaciones previas de Firebase para evitar sesgos
+  // Acumulador de regiones TC asignadas en esta pasada
   var acum={ortega:0, medina:0, arevalo:0, mohanna:0};
+
+  // Cuotas mensuales de regiones TC por médico
+  // Días hábiles del mes: ~22. Cuotas diarias: ortega 10, medina ~7, arevalo ~6, mohanna 10
+  var CUOTA_MES={ortega:220, medina:150, arevalo:130, mohanna:220};
 
   pacs.forEach(function(p){
     var s=(p.servicio||'').toUpperCase();
@@ -197,35 +200,15 @@ function autoAsignar(pacs){
 
     var nCods=p.codigos?p.codigos.length:1;
 
-    // Distribuir en proporción fija entre los 4 médicos (solo TC)
-    // Total cuotas TC: ortega 220 + medina 150 + arevalo 130 + mohanna 220 = 720
-    // Proporciones: ortega 30.6% : medina 20.8% : arevalo 18.1% : mohanna 30.6%
-    var total = acum.ortega + acum.medina + acum.arevalo + acum.mohanna + 0.001;
-    var propOrtega  = acum.ortega  / total;
-    var propMedina  = acum.medina  / total;
-    var propArevalo = acum.arevalo / total;
-    var propMohanna = acum.mohanna / total;
-
-    var TARGET_ORTEGA  = 0.306;
-    var TARGET_MEDINA  = 0.208;
-    var TARGET_AREVALO = 0.181;
-    var TARGET_MOHANNA = 0.306;
-
-    var defOrtega  = TARGET_ORTEGA  - propOrtega;
-    var defMedina  = TARGET_MEDINA  - propMedina;
-    var defArevalo = TARGET_AREVALO - propArevalo;
-    var defMohanna = TARGET_MOHANNA - propMohanna;
-
-    var elegido;
-    if(defOrtega >= defMedina && defOrtega >= defArevalo && defOrtega >= defMohanna){
-      elegido='ortega';
-    } else if(defMedina >= defOrtega && defMedina >= defArevalo && defMedina >= defMohanna){
-      elegido='medina';
-    } else if(defMohanna >= defOrtega && defMohanna >= defMedina && defMohanna >= defArevalo){
-      elegido='mohanna';
-    } else {
-      elegido='arevalo';
-    }
+    // Elegir el médico con mayor déficit de regiones respecto a su cuota mensual
+    // déficit = cuota - acumulado (el que más necesita recibe el próximo estudio)
+    var medicos=['ortega','medina','arevalo','mohanna'];
+    var elegido=null;
+    var maxDef=-Infinity;
+    medicos.forEach(function(m){
+      var def=CUOTA_MES[m]-acum[m];
+      if(def>maxDef){maxDef=def;elegido=m;}
+    });
 
     a[p.orden]=elegido;
     acum[elegido]+=nCods;
