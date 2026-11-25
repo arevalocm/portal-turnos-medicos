@@ -311,10 +311,34 @@ async function loadFromFirebase(){
     p.estado = estadoMap[p.orden] || '';
   });
 
-  // Auto-asignar los que no tienen asignación
-  var auto = autoAsignar(pacientes);
+  // Auto-asignar solo los pacientes SIN asignación en Firebase
+  // Precargar el acumulador con los ya asignados para respetar cuotas
+  var hoyAA=new Date();
+  var mmAA=String(hoyAA.getMonth()+1).padStart(2,'0');
+  var yyAA=String(hoyAA.getFullYear()).slice(2);
+  var CUOTA_TC_AA={ortega:220, medina:200, mohanna:220};
+  var acumAA={ortega:0, medina:0, arevalo:0, mohanna:0};
+  // Paso 1: contabilizar regiones TC ya asignadas en Firebase (mes actual)
   pacientes.forEach(function(p){
-    if(!asignaciones[p.orden]) asignaciones[p.orden] = auto[p.orden];
+    var med=asignaciones[p.orden];
+    if(!med) return;
+    var s=(p.servicio||'').toUpperCase();
+    var rm=s.indexOf('IRM')>=0||s.indexOf('RESONAN')>=0||s.indexOf('RESONADOR')>=0;
+    if(!rm && esMismoMes(p.fecha, mmAA, yyAA)) acumAA[med]=(acumAA[med]||0)+(p.codigos?p.codigos.length:1);
+  });
+  // Paso 2: autoasignar solo los nuevos (sin asignación en Firebase)
+  pacientes.forEach(function(p){
+    if(asignaciones[p.orden]) return; // ya tiene asignación → preservar
+    var s=(p.servicio||'').toUpperCase();
+    var rm=s.indexOf('IRM')>=0||s.indexOf('RESONAN')>=0||s.indexOf('RESONADOR')>=0;
+    if(rm){ asignaciones[p.orden]='medina'; return; }
+    var nCods=p.codigos?p.codigos.length:1;
+    var candidatos=['ortega','medina','mohanna'].filter(function(m){ return acumAA[m]<CUOTA_TC_AA[m]; });
+    var elegido;
+    if(candidatos.length===0){ elegido='arevalo'; }
+    else { elegido=candidatos.reduce(function(best,m){ return (CUOTA_TC_AA[m]-acumAA[m])>(CUOTA_TC_AA[best]-acumAA[best])?m:best; }); }
+    asignaciones[p.orden]=elegido;
+    acumAA[elegido]+=nCods;
   });
   // Aplicar overrides
   Object.keys(overrides).forEach(function(k){ asignaciones[k]=overrides[k]; });
@@ -573,7 +597,8 @@ function renderAdmin(tab){
     // Obtener lista de meses disponibles con estudios informados
     var mesesDisp={};
     todosLosPacientes.forEach(function(p){
-      if(todosEstadoMap[p.orden]==='informado'){
+      var esInf=todosEstadoMap[p.orden]==='informado'||!!p.fechaInformadoISO;
+      if(esInf){
         var parts=(p.fecha||'').split('/');
         if(parts.length===3){var mk=parts[1]+'/20'+parts[2];mesesDisp[mk]=true;}
       }
@@ -622,8 +647,10 @@ function renderAdmin(tab){
       tbl+='<div style="padding:2rem;text-align:center;color:#999">Sin pacientes informados aún.</div></div>';
     } else {
       // Filtrar estudios del mes seleccionado que estén informados
+      // Red de seguridad: también incluir si tiene fechaInformadoISO aunque no esté en estadoMap
       var estudiosMes=todosLosPacientes.filter(function(p){
-        if(todosEstadoMap[p.orden]!=='informado') return false;
+        var esInf=todosEstadoMap[p.orden]==='informado'||!!p.fechaInformadoISO;
+        if(!esInf) return false;
         var parts=(p.fecha||'').split('/');
         if(parts.length!==3) return false;
         return (parts[1]+'/20'+parts[2])===mesSel;
@@ -1244,9 +1271,14 @@ async function guardar(){
 // ── Médico ───────────────────────────────────────────────────────────────────
 function liquidacionMedico(medId){
   var meses={};
-  pacientes.forEach(function(p){
-    if(estadoMap[p.orden]==='informado' && asignaciones[p.orden]===medId){
-      var parts=p.fecha.split('/');
+  var allEstLiq=window._estadoMap||estadoMap;
+  var allAsigLiq=window._asignaciones||asignaciones;
+  var allPacsLiq=(window._pacientes&&window._pacientes.length>0)?window._pacientes:pacientes;
+  allPacsLiq.forEach(function(p){
+    var esInf=allEstLiq[p.orden]==='informado'||!!p.fechaInformadoISO;
+    if(esInf && allAsigLiq[p.orden]===medId){
+      var parts=(p.fecha||'').split('/');
+      if(parts.length!==3) return;
       var mk=parts[1]+'/20'+parts[2];
       if(!meses[mk])meses[mk]={e:0,c:0};
       meses[mk].e++;
@@ -1277,7 +1309,9 @@ function renderMiLiquidacion(medId, todosPacs, todosEstado){
   // Agrupar estudios informados por mes
   var mesesMap={};
   allPacs.forEach(function(p){
-    if(allEstado[p.orden]!=='informado') return;
+    // Considerar informado si está en estadoMap O si tiene fechaInformadoISO (red de seguridad)
+    var esInf=allEstado[p.orden]==='informado'||!!p.fechaInformadoISO;
+    if(!esInf) return;
     if(allAsig[p.orden]!==medId) return;
     var parts=(p.fecha||'').split('/');
     if(parts.length!==3) return;
@@ -1612,9 +1646,12 @@ function renderMedico(){
 function _renderMedicoInner(u, med){
   // Incluir asignados al médico + extras informados que guardó Firebase
   var mis=pacientes.filter(function(p){
-    return asignaciones[p.orden]===med.id || (estadoMap[p.orden]==='informado' && !asignaciones[p.orden]);
+    if(asignaciones[p.orden]===med.id) return true;
+    // Incluir estudios informados sin asignación (compatibilidad hacia atrás)
+    if(estadoMap[p.orden]==='informado' && !asignaciones[p.orden]) return true;
+    return false;
   });
-  var pend=mis.filter(function(p){return p.estado!=='informado';}).length;
+  var pend=mis.filter(function(p){return p.estado!=='informado'&&!p.fechaInformadoISO;}).length;
   // Tabla pendientes
   var rows='';
   mis.slice().sort(function(a,b){
@@ -1622,12 +1659,12 @@ function _renderMedicoInner(u, med){
     var fb=b.fecha.split('/').reverse().join('');
     return fa>fb?1:fa<fb?-1:0;
   }).forEach(function(p){
-    if(p.estado==='informado') return;
-    if(p.estado==='informado') return;
+    if(p.estado==='informado'||p.fechaInformadoISO) return;
     rows+='<tr><td><b>'+p.orden+'</b></td><td style="color:#666">'+p.fecha+'</td><td style="font-size:11px;color:'+(colorLlegada(p))+'">'+( p.fechaLlegada||'—')+'</td><td>'+p.nombre+'</td><td style="color:#666;font-size:12px">'+p.servicio+'</td><td style="text-align:center"><span class="badge b-sin">'+(p.codigos?p.codigos.length:0)+'</span></td><td>'+ab(p.atencion)+'</td><td>'+(p.estado==='informado'?'<span class="badge b-ok">Informado</span>':'<span class="badge b-sin">Pendiente</span>')+'</td><td style="display:flex;gap:6px;align-items:center">'+(p.estado!=='informado'?'<button class="btn-informar" onclick="abrirInformar(\''+p.orden+'\')">+ Informar</button>':'<span style="font-size:12px;color:#1a7a4a">Completado</span>')+'</td></tr>';
   });
   // Tabla informados — ordenada por fecha descendente (más reciente primero)
-  var informados=mis.filter(function(p){return p.estado==='informado';});
+  // Red de seguridad: también incluir estudios con fechaInformadoISO aunque estado no esté seteado
+  var informados=mis.filter(function(p){return p.estado==='informado'||!!p.fechaInformadoISO;});
   informados.sort(function(a,b){
     // fecha formato DD/MM/YY → convertir a numero comparable
     function toNum(f){ var p=f.split('/'); return parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]); }
@@ -1641,7 +1678,7 @@ function _renderMedicoInner(u, med){
   var tablaInf=informados.length===0?'':'<div class="card" style="margin-top:1rem"><div class="card-header"><span class="card-title">Mis pacientes informados</span><span style="font-size:12px;color:#1a7a4a;font-weight:bold">Pacientes: '+informados.length+' &nbsp;·&nbsp; Regiones: '+totalRegInf+'</span><input id="buscar-inf" type="text" placeholder="Buscar paciente..." style="padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div><div class="tbl-wrap"><table id="tabla-inf"><thead><tr><th>Fecha</th><th>Paciente</th><th>Servicio</th><th>Reg.</th></tr></thead><tbody>'+rowsInf+'</tbody></table></div></div>';
     var infCount=informados.length;
   var infReg=totalRegInf;
-  var pendReg=mis.filter(function(p){return p.estado!=='informado';}).reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
+  var pendReg=mis.filter(function(p){return p.estado!=='informado'&&!p.fechaInformadoISO;}).reduce(function(a,p){return a+(p.codigos?p.codigos.length:0);},0);
   // Calcular conteo por mes para el botón
   var mesesNombres=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   var hoy=new Date();
